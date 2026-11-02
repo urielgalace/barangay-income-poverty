@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-build="{{ build }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}{{ page_title }} · Barangay Income and Poverty Atlas{% endblock %}</title>
+<meta name="description" content="{{ description }}">
+<link rel="canonical" href="{{ site }}{{ path }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Barangay Income and Poverty Atlas">
+<meta property="og:title" content="{{ page_title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:url" content="{{ site }}{{ path }}">
+<meta property="og:image" content="{{ site }}assets/share.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/site.css?b={{ build }}">
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+{% block head %}{% endblock %}
+</head>
+<body class="page-{{ page }}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <div class="head-row">
+      <a class="brand" href="index.html">Barangay Income and Poverty Atlas</a>
+      <nav class="site-nav" aria-label="Main">
+        {% for slug, label in nav %}<a href="{{ slug }}.html"{% if slug == page %} aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+    <div class="stamp">
+      <span>Data version <a href="versions.html" class="code">{{ meta.version }}</a>, {{ meta.version_date|longdate }}</span>
+    </div>
+  </div>
+</header>
+<main id="main">
+{% block main %}{% endblock %}
+</main>
+<footer class="site-foot">
+  <div class="wrap foot-grid">
+    <p><a href="https://github.com/{{ repo }}">GitHub</a> · <a href="https://github.com/{{ repo }}/issues/new?template=data-problem.yml">Report a problem</a></p>
+    <div class="theme-switch" id="theme-switch"><span>Theme</span></div>
+  </div>
+</footer>
+<script type="module">import { initTheme } from "./assets/js/lib.js?b={{ build }}"; initTheme();</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

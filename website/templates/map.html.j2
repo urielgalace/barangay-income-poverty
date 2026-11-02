@@ -1,0 +1,36 @@
+{% extends "base.html.j2" %}
+{% block head %}<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous">{% endblock %}
+{% block main %}
+<div id="map" role="application" aria-label="Interactive map of income and poverty in the Philippines. Use the search box to find a place by keyboard."></div>
+<div class="panel panel-controls" id="panel-controls">
+  <div class="mobile-bar mobile-keep"><button class="btn quiet" type="button" id="panel-toggle">Layers</button></div>
+  <h1 style="font-size:1.5rem">Income and poverty, 2025</h1>
+  <div class="combo field mobile-keep">
+    <label for="search">Find a place</label>
+    <input type="search" id="search" placeholder="Barangay, city or municipality">
+  </div>
+  <div class="field"><span>Measure</span><div id="metric"></div></div>
+  <div class="field"><span>Level</span><div id="level"></div></div>
+  <div class="map-legend mobile-keep" id="map-legend"></div>
+  <label id="local-wrap" class="small check-row"><input type="checkbox" id="local"> <span>Adjust color bands to reflect the range of values currently displayed on the map. This is particularly useful in Metro Manila, where all barangays fall within the lowest national band.</span></label>
+  {% if n_versions > 1 %}
+  <details>
+    <summary>Compare data versions</summary>
+    <div class="filters" style="display:grid;gap:8px">
+      <div class="field"><label for="ver">Show version</label><select id="ver"></select></div>
+      <div class="field"><label for="from">Change from</label><select id="from"><option value="">Do not compare</option></select></div>
+      <p class="tiny">Blue means the later figure is lower, and red means it is higher. See <a href="versions.html">what changed in each version</a>.</p>
+    </div>
+  </details>
+  {% endif %}
+  <div class="status mobile-keep" id="map-status" role="status" aria-live="polite"></div>
+  <p class="tiny">Select any location to view its margin of error.</p>
+</div>
+<aside class="panel panel-detail" id="detail" hidden aria-label="Selected place">
+  <button class="close-x" id="detail-close" type="button" aria-label="Close">×</button>
+  <div id="detail-body" style="display:grid;gap:12px"></div>
+</aside>
+<div class="map-tip" id="map-tip" hidden></div>
+<noscript><p style="color:#fff;padding:80px 24px;position:relative">This map needs JavaScript. The <a href="statistics.html" style="color:#62c4d8">statistics page</a> describes the same data.</p></noscript>
+{% endblock %}
+{% block scripts %}<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script><script type="module" src="assets/js/map.js?b={{ build }}"></script>{% endblock %}

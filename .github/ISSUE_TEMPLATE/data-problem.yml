@@ -1,0 +1,26 @@
+name: Report a data problem
+description: A wrong name, a misplaced barangay, a broken page or a mistake in the methods
+title: "Data problem: "
+body:
+  - type: input
+    id: place
+    attributes:
+      label: Place
+      description: The barangay, city or municipality, if this is about a place.
+      placeholder: Batasan Hills, Quezon City
+  - type: textarea
+    id: problem
+    attributes:
+      label: What looks wrong?
+      description: Please say what the site shows and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: How do you know?
+      description: A link or a source helps. Local knowledge is welcome too. Please do not include anyone's personal information.
+  - type: input
+    id: page
+    attributes:
+      label: Link to the page

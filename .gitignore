@@ -1,0 +1,12 @@
+# Only what is listed here goes to GitHub. Raw data, the local environment and archives stay on this machine.
+/*
+!/.gitignore
+!/.github/
+!/README.md
+!/CITATION.cff
+!/docs/
+!/website/
+website/.cache/
+__pycache__/
+*.pyc
+.DS_Store

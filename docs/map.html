@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" data-build="2bcf446a67">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Map · Barangay Income and Poverty Atlas</title>
+<meta name="description" content="Interactive map of household income and poverty in every Philippine barangay, city and municipality, with margins of error.">
+<link rel="canonical" href="https://urielgalace.github.io/barangay-income-poverty/map.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Barangay Income and Poverty Atlas">
+<meta property="og:title" content="Map">
+<meta property="og:description" content="Interactive map of household income and poverty in every Philippine barangay, city and municipality, with margins of error.">
+<meta property="og:url" content="https://urielgalace.github.io/barangay-income-poverty/map.html">
+<meta property="og:image" content="https://urielgalace.github.io/barangay-income-poverty/assets/share.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/site.css?b=2bcf446a67">
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous">
+</head>
+<body class="page-map">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <div class="head-row">
+      <a class="brand" href="index.html">Barangay Income and Poverty Atlas</a>
+      <nav class="site-nav" aria-label="Main">
+        <a href="map.html" aria-current="page">Map</a>
+        <a href="trends.html">Trends</a>
+        <a href="statistics.html">Statistics</a>
+        <a href="methods.html">Methods</a>
+        <a href="versions.html">Versions</a>
+        <a href="about.html">About</a>
+        
+      </nav>
+    </div>
+    <div class="stamp">
+      <span>Data version <a href="versions.html" class="code">v1.0</a>, 30 October 2026</span>
+    </div>
+  </div>
+</header>
+<main id="main">
+
+<div id="map" role="application" aria-label="Interactive map of income and poverty in the Philippines. Use the search box to find a place by keyboard."></div>
+<div class="panel panel-controls" id="panel-controls">
+  <div class="mobile-bar mobile-keep"><button class="btn quiet" type="button" id="panel-toggle">Layers</button></div>
+  <h1 style="font-size:1.5rem">Income and poverty, 2025</h1>
+  <div class="combo field mobile-keep">
+    <label for="search">Find a place</label>
+    <input type="search" id="search" placeholder="Barangay, city or municipality">
+  </div>
+  <div class="field"><span>Measure</span><div id="metric"></div></div>
+  <div class="field"><span>Level</span><div id="level"></div></div>
+  <div class="map-legend mobile-keep" id="map-legend"></div>
+  <label id="local-wrap" class="small check-row"><input type="checkbox" id="local"> <span>Adjust color bands to reflect the range of values currently displayed on the map. This is particularly useful in Metro Manila, where all barangays fall within the lowest national band.</span></label>
+  
+  <div class="status mobile-keep" id="map-status" role="status" aria-live="polite"></div>
+  <p class="tiny">Select any location to view its margin of error.</p>
+</div>
+<aside class="panel panel-detail" id="detail" hidden aria-label="Selected place">
+  <button class="close-x" id="detail-close" type="button" aria-label="Close">×</button>
+  <div id="detail-body" style="display:grid;gap:12px"></div>
+</aside>
+<div class="map-tip" id="map-tip" hidden></div>
+<noscript><p style="color:#fff;padding:80px 24px;position:relative">This map needs JavaScript. The <a href="statistics.html" style="color:#62c4d8">statistics page</a> describes the same data.</p></noscript>
+
+</main>
+<footer class="site-foot">
+  <div class="wrap foot-grid">
+    <p><a href="https://github.com/urielgalace/barangay-income-poverty">GitHub</a> · <a href="https://github.com/urielgalace/barangay-income-poverty/issues/new?template=data-problem.yml">Report a problem</a></p>
+    <div class="theme-switch" id="theme-switch"><span>Theme</span></div>
+  </div>
+</footer>
+<script type="module">import { initTheme } from "./assets/js/lib.js?b=2bcf446a67"; initTheme();</script>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script><script type="module" src="assets/js/map.js?b=2bcf446a67"></script>
+</body>
+</html>

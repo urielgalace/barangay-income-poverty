@@ -1,0 +1,28 @@
+{% extends "base.html.j2" %}
+{% block main %}
+<div class="wrap">
+  <div class="page-title">
+    <div class="eyebrow">Official time series, 2018 to 2025</div>
+    <h1>Trends</h1>
+    <p class="lede">Examine trends in household income and poverty across different geographic areas. All figures are based on official PSA data, except where hollow markers indicate estimates produced by this dataset.</p>
+  </div>
+  <section class="block" id="explorer">
+    <div class="filters">
+      <div class="field combo" style="width:min(420px,100%)"><label for="area">Region, province, city or municipality</label><input type="search" id="area" placeholder="Type a name"></div>
+    </div>
+    <header><h2 id="area-title">Philippines</h2><p class="small" id="area-sub"></p><p class="small" id="area-note" hidden></p></header>
+    <div class="two" id="area-figs"></div>
+  </section>
+  <section class="block">
+    <header><h2>Comparing trends across regions</h2><p class="small">Compare trends across all regions using a common scale, with the national trend shown in gray and the latest official estimate displayed beside each region’s name. Select a region to examine its trends in greater detail above.</p></header>
+    <div class="filters"><div id="region-measure"></div></div>
+    <div class="mini-grid" id="region-grid"></div>
+  </section>
+  <section class="block">
+    <header><h2>Changes across provinces</h2><p class="small">Provincial estimates are based on relatively small survey samples and may fluctuate substantially between survey rounds.</p></header>
+    <div class="filters"><div id="prov-measure"></div><div class="field"><label for="prov-region">Region</label><select id="prov-region"></select></div></div>
+    <div id="prov-fig"></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="assets/js/trends.js?b={{ build }}"></script>{% endblock %}

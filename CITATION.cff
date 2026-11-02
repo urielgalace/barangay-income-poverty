@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this, please cite it as below, credit the Philippine Statistics Authority for the official data, and indicate that barangay and municipal values are estimates."
+title: "Barangay Income and Poverty Atlas of the Philippines, 2025"
+type: dataset
+authors:
+  - family-names: Galace
+    given-names: Uriel
+version: "v1.0"
+date-released: "2026-10-30"
+url: "https://urielgalace.github.io/barangay-income-poverty/"
+repository-code: "https://github.com/urielgalace/barangay-income-poverty"

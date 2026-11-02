@@ -1,0 +1,48 @@
+{% extends "base.html.j2" %}
+{% block title %}Barangay Income and Poverty Atlas{% endblock %}
+{% block main %}
+<div class="hero">
+  <div class="hero-text">
+    <h1>Income and poverty in every barangay</h1>
+    <p class="lede">A dataset covering all {{ meta.barangays|num }} barangays. Official data from the Philippine Statistics Authority are used for income and poverty rates at the regional and provincial levels, while satellite imagery and machine learning are used to estimate data at the barangay level. All estimates are preliminary.</p>
+    <div class="search-hero combo">
+      <label for="home-search">Find a barangay, city or municipality</label>
+      <input type="search" id="home-search" placeholder="Type a barangay, city or municipality">
+    </div>
+    <div class="cta"><a class="btn" href="map.html">Open the full map</a></div>
+    <dl class="stats duo">
+      <div class="stat"><dt>Average household income</dt><dd>₱{{ meta.income|num }}</dd><div class="d">Per month, PSA 2025</div></div>
+      <div class="stat"><dt>Poverty incidence</dt><dd>{{ meta.poverty }}%</dd><div class="d">PSA 2025, from {{ meta.poverty_2023 }}% in 2023</div></div>
+      <div class="stat"><dt>People in poverty</dt><dd>{{ "%.1f"|format(meta.poor_official_m) }}M</dd><div class="d">PSA 2025, preliminary</div></div>
+      <div class="stat"><dt>Poverty line, family of five</dt><dd>₱{{ meta.line_family5_month|num }}</dd><div class="d">Per month, PSA 2025</div></div>
+    </dl>
+  </div>
+  <div class="plate">
+    <div class="plate-head"><div class="plate-title" id="home-map-title">Average monthly household income by city and municipality</div><div id="home-metric"></div></div>
+    <div class="plate-map" id="home-map"><p class="small" style="color:var(--sea-ink-2)">Loading the map…</p></div>
+    <div class="scale" id="home-scale"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="block">
+    <header><h2>The national picture</h2><p class="small">These figures are based on official PSA data. Trends for individual regions, provinces, cities, and municipalities can be explored on the <a href="trends.html">trends page</a>.</p></header>
+    <div class="two" id="home-trend"></div>
+  </section>
+  <section class="block">
+    <div class="two" id="home-regions"></div>
+  </section>
+  <section class="block">
+    <h2>Explore the rest of the atlas</h2>
+    <ul class="linklist">
+      <li><a href="map.html">Map</a><p>Explore income and poverty estimates for every barangay, including margins of error and shareable links.</p></li>
+      <li><a href="trends.html">Trends</a><p>Examine official income and poverty trends from 2018 to 2025 across different geographic areas.</p></li>
+      <li><a href="statistics.html">Statistics</a><p>Explore population distributions, the geographic concentration of poverty, and detailed statistical tables.</p></li>
+      <li><a href="methods.html">Methods</a><p>Learn how the estimates were constructed, including the data sources and methodology.</p></li>
+      <li><a href="versions.html">Versions</a><p>Review the current version of the dataset and the data behind it.</p></li>
+      <li><a href="about.html">About</a><p>Find answers to frequently asked questions and information on how to report potential errors.</p></li>
+    </ul>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="assets/js/home.js?b={{ build }}"></script>{% endblock %}
