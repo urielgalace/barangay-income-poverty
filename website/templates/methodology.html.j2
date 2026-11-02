@@ -149,6 +149,26 @@
         <p>In held-out surveys, the barangay component of the poverty interval contained the observed poverty rate {{ "%.0f"|format(method.poverty.coverage) }}% of the time, close to its nominal coverage of 90%.</p>
       </div>
     </div>
+
+    <details>
+      <summary>Model settings</summary>
+      <div class="tv flat" style="max-width:760px"><table>
+        <thead><tr><th scope="col">Setting</th><th scope="col"><span class="key dot c-income"></span> Income model</th><th scope="col"><span class="key dot c-poverty"></span> Poverty model</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Gradient boosting library</th><td colspan="2">scikit-learn HistGradientBoostingRegressor</td></tr>
+          <tr><th scope="row">Trees</th><td>200</td><td>300</td></tr>
+          <tr><th scope="row">Learning rate</th><td>0.04</td><td>0.03</td></tr>
+          <tr><th scope="row">Maximum leaves per tree</th><td>7</td><td>15</td></tr>
+          <tr><th scope="row">Minimum observations per leaf</th><td>8</td><td>25</td></tr>
+          <tr><th scope="row">L2 penalty</th><td>2</td><td>5</td></tr>
+          <tr><th scope="row">Share of inputs considered at each split</th><td colspan="2">50%</td></tr>
+          <tr><th scope="row">Random seeds averaged</th><td colspan="2">10</td></tr>
+          <tr><th scope="row">Ridge regression</th><td>Inputs standardized, missing values set to the median, penalty chosen by cross-validation from 0.01 to 10,000.</td><td>Not used.</td></tr>
+          <tr><th scope="row">Target</th><td>Log of area income divided by national income.</td><td>Log-odds of the poverty rate, minus the municipal mean.</td></tr>
+          <tr><th scope="row">Training rows</th><td>{{ method.income.rows }} area-years</td><td>{{ method.poverty.n|num }} barangays</td></tr>
+        </tbody>
+      </table></div>
+    </details>
   </section>
 
   <section class="block" id="tests">
@@ -198,6 +218,8 @@
         <div class="inner">
           <p>The PSA’s OpenSTAT database provides a publicly accessible PXWeb API, allowing census data to be retrieved programmatically.</p>
           <p>One request per region was used to obtain barangay-level population, household population, and household counts.</p>
+          <pre>curl -X POST "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/1A/PO_2024/&lt;table&gt;.px" \
+  -d '{"query":[...],"response":{"format":"csv"}}'</pre>
         </div>
       </details>
       <details>
