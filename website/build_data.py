@@ -411,7 +411,7 @@ def write_series(lgus, areas, regions):
         items[k]["inc"] = [r for r in items[k]["inc"] if r[0] != 2018]
         if "poor" in items[k]:
             items[k]["poor"] = [r for r in items[k]["poor"] if r[0] != 2018]
-        items[k]["note"] = "2018 is left out. Sulu moved from BARMM to Region IX in 2025, and PSA revised only 2021 and 2023 poverty figures to match."
+        items[k]["note"] = "Figures for 2018 are excluded because Sulu was transferred from BARMM to Region IX in 2025, and the PSA revised only the 2021 and 2023 poverty estimates to reflect this change."
     items["r:region xii"]["note"] = "63 barangays moved from North Cotabato to BARMM. PSA revised 2021 poverty to match, but FIES 2021 income still counts them in this region."
     embo = "The 10 EMBO barangays moved from Makati to Taguig. PSA's 2021 and 2023 figures still count them in Makati, so each city's series is not comparable across that change."
     for k, q in items.items():

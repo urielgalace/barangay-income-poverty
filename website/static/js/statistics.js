@@ -13,9 +13,9 @@ async function boot() {
   // regions, with a measure switch in one row above the chart
   let regMetric = "i";
   const defs = {
-    i: { title: "Average monthly household income by region", sub: "Official FIES 2025, preliminary.", color: "income", fmt: fmt.pesoExact, ref: { value: meta.income, label: `Philippines ${fmt.pesoExact(meta.income)}` } },
+    i: { title: "Average monthly household income by region", sub: "Family Income and Expenditure Survey (FIES) 2025, preliminary.", color: "income", fmt: fmt.pesoExact, ref: { value: meta.income, label: `Philippines ${fmt.pesoExact(meta.income)}` } },
     p: { title: "Poverty by region", sub: "Official 2025 poverty incidence.", color: "poverty", fmt: pctF, ref: { value: meta.poverty, label: `Philippines ${meta.poverty}%` } },
-    poor: { title: "People in poverty by region", sub: "Estimated from the official rates and the 2024 census.", color: "poverty", fmt: (v) => fmt.compact(v) },
+    poor: { title: "People in poverty by region", sub: "Estimates based on official rates and 2024 census data.", color: "poverty", fmt: (v) => fmt.compact(v) },
   };
   const regFig = figure(document.getElementById("reg-fig"), { title: "", draw: null });
   const drawReg = () => {
@@ -33,8 +33,8 @@ async function boot() {
   // share of people and share of the poor
   const shares = R.slice().sort((a, b) => (b.share_poor - b.share_pop) - (a.share_poor - a.share_pop));
   figure(document.getElementById("share-fig"), {
-    title: "Where a region's share of the poor differs from its share of people",
-    sub: "A region with an orange dot to the right of its gray dot holds more than its share of Filipinos in poverty.",
+    title: "Concentration of poverty relative to population size",
+    sub: "When a region’s orange dot is to the right of its gray dot, its share of the country’s poor is larger than its share of the population.",
     legend: [{ cls: "dot c-context", label: "Share of all people" }, { cls: "dot c-poverty", label: "Share of all people in poverty" }],
     draw: (b, w) => dumbbell(b, w, { rows: shares.map((r) => ({ label: r.short, a: r.share_pop, b: r.share_poor })), format: pctF, xFormat: (v) => `${v}%`, aLabel: "Share of people", bLabel: "Share of people in poverty" }),
     table: () => ({ headers: ["Region", "Share of people %", "Share of people in poverty %"], numeric: [0, 1, 1], rows: shares.map((r) => [r.name, r.share_pop, r.share_poor]) }),
@@ -45,8 +45,8 @@ async function boot() {
   const groupColors = ["income", "poverty", "s3", "s4", "s5", "s6"];
   const groups = S.groups.map((g, i) => ({ label: g, color: groupColors[i] }));
   figure(document.getElementById("src-fig"), {
-    title: "Where household income comes from, 2025",
-    sub: "Official FIES 2025, preliminary. Imputed rent is the value of living in a home the household owns.",
+    title: "Sources of household income, 2025",
+    sub: "Family Income and Expenditure Survey (FIES) 2025, preliminary. Imputed rent is the estimated rental value of a home occupied by the household that owns it.",
     legend: groups.map((g) => ({ cls: `box c-${g.color}`, label: g.label })),
     draw: (b, w) => stackedH(b, w, { rows: S.rows.map((r) => ({ label: r.name, values: r.shares })), groups }),
     table: () => ({ headers: ["Area", ...S.groups.map((g) => `${g} %`)], numeric: [0, ...S.groups.map(() => 1)], rows: S.rows.map((r) => [r.name, ...r.shares]) }),
@@ -56,7 +56,7 @@ async function boot() {
   const names = ["Poorest tenth", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Richest tenth"];
   figure(document.getElementById("dec-fig"), {
     title: "Average monthly household income by decile, 2025",
-    sub: "Official FIES 2025, preliminary. Households ranked by income per person.",
+    sub: "Family Income and Expenditure Survey (FIES) 2025, preliminary. Households ranked by income per person.",
     draw: (b, w) => barsH(b, w, { rows: stats.deciles.map((r, i) => ({ label: names[i], value: r[2], r })), color: "income", format: fmt.pesoExact, tipRows: (q) => [{ value: fmt.pesoExact(q.r[2]), label: "2025" }, { value: fmt.pesoExact(q.r[1]), label: "2023" }, { value: fmt.pesoExact(q.r[0]), label: "2021" }, { value: `${q.r[3]}%`, label: "coefficient of variation, 2025" }] }),
     table: () => ({ headers: ["Decile", "2021 (₱) per month", "2023 (₱) per month", "2025 (₱) per month", "2025 CV %"], numeric: [0, 1, 1, 1, 1], rows: stats.deciles.map((r, i) => [names[i], fmt.int(r[0]), fmt.int(r[1]), fmt.int(r[2]), r[3]]) }),
   });
@@ -71,8 +71,8 @@ async function boot() {
     const unit = histW === "n" ? "barangays" : histM === "poverty" ? "people" : "households";
     const rows = H.rows.map((r) => ({ label: r.label, value: (r[histW] / total) * 100, raw: r }));
     histFig.update({
-      title: histM === "poverty" ? "How barangays spread across poverty rates" : "How barangays spread across monthly household income",
-      sub: `Share of ${unit} in each band, using modeled barangay estimates. The model pulls extreme values inward, so the real spread is wider than this.`,
+      title: histM === "poverty" ? "Distribution of barangays by poverty rate" : "Distribution of barangays by monthly household income",
+      sub: `The proportion of ${unit} in each ${histM === "poverty" ? "poverty" : "income"} range, based on model estimates. Because the model tends to pull extreme values toward the average, the actual distribution is likely more dispersed than shown.`,
       draw: (b, w) => columns(b, w, { rows, color: histM === "poverty" ? "poverty" : "income", format: (v) => `${v.toFixed(v < 10 ? 1 : 0)}%`, yFormat: (v) => `${v}%`, tipRows: (q) => [{ value: fmt.int(q.raw.n), label: "barangays" }, { value: fmt.int(q.raw.w), label: histM === "poverty" ? "people" : "households" }] }),
       table: () => ({ headers: ["Band", "Barangays", histM === "poverty" ? "People" : "Households"], numeric: [0, 1, 1], rows: H.rows.map((r) => [r.label, fmt.int(r.n), fmt.int(r.w)]) }),
     });
@@ -84,10 +84,10 @@ async function boot() {
   // concentration
   const C = stats.concentration;
   const toPts = (c) => [{ x: 0, y: 0 }, ...c.x.map((v, i) => ({ x: (v / c.n) * 100, y: c.y[i] }))];
-  document.getElementById("conc-text").textContent = `Half of all people in poverty live in ${fmt.int(C.lgu.half)} of the country's ${fmt.int(C.lgu.n)} cities and municipalities, and in ${fmt.int(C.bgy.half)} of its ${fmt.int(C.bgy.n)} barangays with estimates.`;
+  document.getElementById("conc-text").textContent = `Half of all Filipinos living in poverty are concentrated in just ${fmt.int(C.lgu.half)} of the country’s ${fmt.int(C.lgu.n)} cities and municipalities, and ${fmt.int(C.bgy.half)} of the ${fmt.int(C.bgy.n)} barangays for which estimates are available.`;
   figure(document.getElementById("conc-fig"), {
-    title: "Running share of people in poverty",
-    sub: "Places ranked from most to fewest people in poverty, along the bottom as a share of all places.",
+    title: "Cumulative share of people living in poverty",
+    sub: "Places are ranked from the highest to the lowest number of people living in poverty. The horizontal axis represents the cumulative proportion of places.",
     legend: [{ cls: "c-poverty", label: "Cities and municipalities" }, { cls: "c-income", label: "Barangays" }],
     draw: (b, w) => lineChart(b, w, { series: [{ key: "l", label: "Cities and municipalities", color: "poverty", points: toPts(C.lgu), faint: true }, { key: "b", label: "Barangays", color: "income", points: toPts(C.bgy), faint: true }], xTicks: [0, 20, 40, 60, 80, 100], xMin: 0, xMax: 100, yMin: 0, yMax: 100, yFormat: (v) => `${v}%`, xFormat: (v) => `${Math.round(v)}%`, tipFormat: pctF, height: 290 }),
     table: () => ({ headers: ["Measure", "Cities and municipalities", "Barangays"], numeric: [0, 1, 1], rows: [["Places holding half of the poor", fmt.int(C.lgu.half), fmt.int(C.bgy.half)], ["Places holding 80% of the poor", fmt.int(C.lgu.eighty), fmt.int(C.bgy.eighty)], ["Share of the poor in the top tenth of places", `${C.lgu.tenth}%`, `${C.bgy.tenth}%`]] }),
@@ -96,8 +96,8 @@ async function boot() {
   // kinds of place
   const kinds = [...stats.urban, ...stats.kinds];
   figure(document.getElementById("kind-fig"), {
-    title: "Poverty by type of place",
-    sub: "Barangay estimates grouped by the census's urban or rural label and by the kind of local government.",
+    title: "Poverty across different types of places",
+    sub: "Barangay-level poverty estimates are grouped by their urban or rural classification in the census and by type of local government.",
     draw: (b, w) => barsH(b, w, { rows: kinds.map((k) => ({ label: k.label, value: k.p, k })), format: pctF, labelWidth: Math.min(w * 0.5, 290), tipRows: (q) => [{ value: fmt.peso(q.k.i), label: "average monthly household income" }, { value: pctF(q.k.p), label: "poverty" }, { value: fmt.int(q.k.pop), label: "people" }, { value: fmt.int(q.k.n), label: "barangays" }] }),
     table: () => ({ headers: ["Place", "Income (₱) per month", "Poverty %", "People", "Barangays"], numeric: [0, 1, 1, 1, 1], rows: kinds.map((k) => [k.label, fmt.hundreds(k.i), k.p, fmt.int(k.pop), fmt.int(k.n)]) }),
   });
@@ -105,8 +105,8 @@ async function boot() {
   // urban and rural by region
   const ur = R.slice().sort((a, b) => b.p_rural - a.p_rural);
   figure(document.getElementById("ur-fig"), {
-    title: "Rural and urban poverty inside each region",
-    sub: "Barangay estimates, so read the gaps as patterns. The urban or rural label comes from the 2024 census.",
+    title: "Rural and urban poverty within each region",
+    sub: "Estimates are based on barangay-level data, with urban and rural classifications drawn from the 2024 census.",
     legend: [{ cls: "dot c-income", label: "Urban barangays" }, { cls: "dot c-poverty", label: "Rural barangays" }],
     draw: (b, w) => dumbbell(b, w, { rows: ur.map((r) => ({ label: r.short, a: r.p_urban, b: r.p_rural })), format: (v) => (v == null ? "n/a" : pctF(v)), xFormat: (v) => `${v}%`, aLabel: "Urban", bLabel: "Rural", aColor: "income" }),
     table: () => ({ headers: ["Region", "Urban %", "Rural %", "Share of people in urban barangays %"], numeric: [0, 1, 1, 1], rows: ur.map((r) => [r.name, r.p_urban, r.p_rural, r.urban_share]) }),
@@ -117,7 +117,7 @@ async function boot() {
   const sel = document.getElementById("sc-region");
   sel.append(h("option", { value: "", text: "No region highlighted" }));
   regionNames.forEach((r) => sel.append(h("option", { value: r, text: r })));
-  const scFig = figure(document.getElementById("sc-fig"), { title: "Income and poverty in every city and municipality", sub: "Each dot is one place. Income is on a log scale. Hover for names, or click a dot to open that place on the map.", draw: null });
+  const scFig = figure(document.getElementById("sc-fig"), { title: "Income and poverty across cities and municipalities", sub: "Each dot represents a city or municipality, with income displayed on a logarithmic scale. Hover over a dot to identify the location, or select it to view the area on the map.", draw: null });
   const drawSc = () => {
     const r = sel.value;
     const pts = lgus.filter((l) => l.p != null && l.i != null).map((l) => ({ x: l.i, y: l.p, label: `${l.name}, ${l.prov || l.reg}`, on: r && l.reg === r, id: l.id, l }));

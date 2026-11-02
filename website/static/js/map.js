@@ -471,7 +471,7 @@ async function renderDetail(sel) {
   } else {
     const a = sel.kind === "province" ? provById.get(sel.id) : regById.get(sel.id);
     box.append(h("div", { class: "crumbs", text: sel.kind === "province" ? a.reg : "Region" }), h("div", { class: "d-title", text: a.name }));
-    box.append(bigValue("Average monthly household income", sel.kind === "province" ? fmt.peso(a.i) : fmt.pesoExact(a.i_official ?? a.i), sel.kind === "province" ? "Weighted by households across the area" : "Official FIES 2025, preliminary"));
+    box.append(bigValue("Average monthly household income", sel.kind === "province" ? fmt.peso(a.i) : fmt.pesoExact(a.i_official ?? a.i), sel.kind === "province" ? "Weighted by households across the area" : "Family Income and Expenditure Survey (FIES) 2025, preliminary"));
     box.append(bigValue(sel.kind === "province" && a.official != null ? "Poverty incidence, as used here" : "Poverty incidence, official", `${(a.p ?? a.official).toFixed(1)}%`, a.official != null ? `PSA published ${a.official}%${a.cv ? `, coefficient of variation ${a.cv}%` : ""}` : null));
     box.append(h("dl", { class: "d-kv" },
       h("div", {}, h("dt", { text: "Population, 2024 census" }), h("dd", { text: fmt.int(a.pop) })),

@@ -1,8 +1,8 @@
 // The interactive map. Cities and municipalities load at once; barangays load province by province as you zoom in.
-import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=2bcf446a67";
-import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=2bcf446a67";
-import { searchPlaces, placeSub } from "./places.js?b=2bcf446a67";
-import { lineChart } from "./charts.js?b=2bcf446a67";
+import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=b0a49ea52e";
+import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=b0a49ea52e";
+import { searchPlaces, placeSub } from "./places.js?b=b0a49ea52e";
+import { lineChart } from "./charts.js?b=b0a49ea52e";
 
 const BGY_MIN_ZOOM = 8;
 const MAX_CHUNKS = 28;
@@ -471,7 +471,7 @@ async function renderDetail(sel) {
   } else {
     const a = sel.kind === "province" ? provById.get(sel.id) : regById.get(sel.id);
     box.append(h("div", { class: "crumbs", text: sel.kind === "province" ? a.reg : "Region" }), h("div", { class: "d-title", text: a.name }));
-    box.append(bigValue("Average monthly household income", sel.kind === "province" ? fmt.peso(a.i) : fmt.pesoExact(a.i_official ?? a.i), sel.kind === "province" ? "Weighted by households across the area" : "Official FIES 2025, preliminary"));
+    box.append(bigValue("Average monthly household income", sel.kind === "province" ? fmt.peso(a.i) : fmt.pesoExact(a.i_official ?? a.i), sel.kind === "province" ? "Weighted by households across the area" : "Family Income and Expenditure Survey (FIES) 2025, preliminary"));
     box.append(bigValue(sel.kind === "province" && a.official != null ? "Poverty incidence, as used here" : "Poverty incidence, official", `${(a.p ?? a.official).toFixed(1)}%`, a.official != null ? `PSA published ${a.official}%${a.cv ? `, coefficient of variation ${a.cv}%` : ""}` : null));
     box.append(h("dl", { class: "d-kv" },
       h("div", {}, h("dt", { text: "Population, 2024 census" }), h("dd", { text: fmt.int(a.pop) })),

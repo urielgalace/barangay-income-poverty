@@ -4,13 +4,13 @@
   <div class="page-title">
     <div class="eyebrow">2025 snapshot</div>
     <h1>Statistics</h1>
-    <p class="lede">Where household income comes from, who lives where, and how concentrated poverty is. Each chart has a table underneath it.</p>
+    <p class="lede">Explore sources of household income, population distributions, and the geographic concentration of poverty. Each chart is accompanied by a detailed table.</p>
   </div>
   <dl class="stats quad" style="margin-bottom:28px">
     <div class="stat"><dt>Average monthly household income</dt><dd>₱{{ meta.income|num }}</dd><div class="d">FIES 2025, preliminary</div></div>
     <div class="stat"><dt>Gini coefficient</dt><dd>{{ "%.3f"|format(meta.gini) }}</dd><div class="d">FIES 2025, preliminary</div></div>
     <div class="stat"><dt>Poverty incidence</dt><dd>{{ meta.poverty }}%</dd><div class="d">95% interval {{ meta.poverty_lo }} to {{ meta.poverty_hi }}. PSA, preliminary</div></div>
-    <div class="stat"><dt>People in poverty</dt><dd>{{ "%.2f"|format(meta.poor_official_m) }}M</dd><div class="d">PSA. {{ "%.2f"|format(meta.poor_dataset_m) }}M here, on the 2024 census base</div></div>
+    <div class="stat"><dt>People in poverty</dt><dd>{{ "%.2f"|format(meta.poor_official_m) }}M</dd><div class="d">PSA. {{ "%.2f"|format(meta.poor_dataset_m) }}M here, based on the 2024 census</div></div>
     <div class="stat"><dt>Population</dt><dd>{{ "%.1f"|format(meta.population / 1000000) }}M</dd><div class="d">2024 census</div></div>
     <div class="stat"><dt>Households</dt><dd>{{ "%.1f"|format(meta.households / 1000000) }}M</dd><div class="d">2024 census</div></div>
     <div class="stat"><dt>Barangays</dt><dd>{{ meta.barangays|num }}</dd><div class="d">PSGC 3Q 2026</div></div>
@@ -22,16 +22,16 @@
     <div class="two"><div id="reg-fig"></div><div id="share-fig"></div></div>
   </section>
   <section class="block">
-    <header><h2>Household income, officially measured</h2></header>
+    <header><h2>Household income</h2></header>
     <div class="two"><div id="src-fig"></div><div id="dec-fig"></div></div>
   </section>
   <section class="block">
-    <header><h2>Barangays</h2><p class="small">This site does not list the richest or poorest barangays. Margins of error are too wide for a ranking of single barangays to mean much, and such a list could stigmatize real communities. Use the <a href="map.html">map</a> to look up any one place along with its margin of error.</p></header>
+    <header><h2>Barangays</h2><p class="small">Use the <a href="map.html">map</a> to explore estimates for individual barangays, including their margins of error.</p></header>
     <div class="filters"><div id="hist-metric"></div><div id="hist-weight"></div></div>
     <div id="hist-fig"></div>
   </section>
   <section class="block">
-    <header><h2>How concentrated poverty is</h2><p class="small" id="conc-text"></p></header>
+    <header><h2>The geographic concentration of poverty</h2><p class="small" id="conc-text"></p></header>
     <div class="two"><div id="conc-fig"></div><div id="kind-fig"></div></div>
   </section>
   <section class="block">
@@ -39,16 +39,16 @@
     <div id="ur-fig"></div>
   </section>
   <section class="block">
-    <header><h2>Income and poverty together</h2></header>
+    <header><h2>The relationship between income and poverty</h2></header>
     <div class="filters"><div class="field"><label for="sc-region">Highlight a region</label><select id="sc-region"></select></div></div>
     <div id="sc-fig"></div>
   </section>
   <section class="block">
-    <header><h2>Provinces and other published areas</h2><p class="small">Select a column to sort. "Official" is PSA's direct estimate. "Used here" is after smoothing and re-benchmarking.</p></header>
+    <header><h2>Provinces and other areas with published estimates</h2><p class="small">Select a column to sort the data. "Official" refers to the PSA’s published estimates, while "Used here" refers to estimates adjusted through smoothing and re-benchmarking.</p></header>
     <div id="prov-table"></div>
   </section>
   <section class="block">
-    <header><h2>Cities and municipalities</h2><p class="small">These are estimates. Select a name to open it on the map.</p></header>
+    <header><h2>Cities and municipalities</h2><p class="small">Figures are model-based estimates. Select a location to view it on the map.</p></header>
     <div id="lgu-table"></div>
   </section>
 </div>
