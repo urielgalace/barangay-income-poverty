@@ -308,23 +308,6 @@
     {% endfor %}
     </div>
   </section>
-
-  <section class="block" id="reproduce">
-    <header><h2>Reproducing the estimates</h2></header>
-    <div class="prose">
-      {% if code_public %}
-      <p>The complete processing pipeline is available in the <a href="https://github.com/{{ repo }}">project repository</a>.</p>
-      <p>With the original source files placed in <code>data/raw</code> and the Google Earth Engine outputs in <code>data/interim</code>, the pipeline can be executed using the commands provided.</p>
-      <pre>python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-./run_pipeline.sh</pre>
-      <p>The pipeline does not repeat the manual PSA downloads, Google Earth Engine data extraction, or model comparison procedures.</p>
-      {% else %}
-      <p>The methodology and source documentation provide the information needed to reconstruct the dataset. However, the full processing pipeline has not yet been made publicly available.</p>
-      <p>Questions about the methodology or code can be submitted through the <a href="https://github.com/{{ repo }}/issues/new">GitHub issue tracker</a>. The source code for the website itself is available in the <a href="https://github.com/{{ repo }}">project repository</a>.</p>
-      {% endif %}
-    </div>
-  </section>
 </div>
 {% endblock %}
 {% block scripts %}<script type="module" src="assets/js/methodology.js?b={{ build }}"></script>{% endblock %}

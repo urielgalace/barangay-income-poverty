@@ -22,7 +22,6 @@ DOCS = ROOT / "docs"
 DATA = DOCS / "data"
 STATIC = ROOT / "website" / "static"
 CACHE = ROOT / "website" / ".cache"
-CODE_PUBLIC = False
 NAV = [("map", "Map"), ("trends", "Trends"), ("statistics", "Statistics"), ("methodology", "Methodology"), ("versions", "Version History"), ("about", "About")]
 PAGES = {
     "index": ("Barangay Income and Poverty Atlas", "Income and poverty estimates for all 42,010 barangays in the Philippines, based on official data from the Philippine Statistics Authority, satellite imagery and machine learning."),
@@ -117,7 +116,7 @@ def main():
     env.filters["num"] = lambda v: f"{int(round(float(v))):,}"
     env.filters["bytes"] = lambda v: f"{v / 1e6:.1f} MB" if v >= 1e6 else f"{v / 1e3:.0f} KB"
     env.filters["longdate"] = lambda s: datetime.strptime(s, "%Y-%m-%d").strftime("%-d %B %Y")
-    common = dict(meta=meta, val=val, nav=NAV, site=K.SITE, repo=K.REPO, build=build, sources=sources, satellite=K.SATELLITE, code_public=CODE_PUBLIC, n_versions=n_versions, method=method)
+    common = dict(meta=meta, val=val, nav=NAV, site=K.SITE, repo=K.REPO, build=build, sources=sources, satellite=K.SATELLITE, n_versions=n_versions, method=method)
     for page, (title, desc) in PAGES.items():
         html = env.get_template(f"{page}.html.j2").render(page=page, page_title=title, description=desc, path="" if page == "index" else f"{page}.html", **common)
         (DOCS / f"{page}.html").write_text(html)
