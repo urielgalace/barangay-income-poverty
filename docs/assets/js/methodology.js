@@ -1,6 +1,6 @@
 // Methodology page: which inputs the models rely on, and how they compare with simpler approaches on held-out data.
-import { getJSON, figure } from "./lib.js?b=8d2b5ae6e9";
-import { barsH } from "./charts.js?b=8d2b5ae6e9";
+import { getJSON, figure } from "./lib.js?b=86474bfb9b";
+import { barsH } from "./charts.js?b=86474bfb9b";
 
 const two = (v) => v.toFixed(2);
 const three = (v) => (v == null ? "n/a" : v.toFixed(3));
@@ -9,7 +9,7 @@ function chart(id, { title, sub, rows, color, table }) {
   figure(document.getElementById(id), {
     title,
     sub,
-    // shuffling a group can raise a score by chance, so a bar never runs below zero; the table keeps the true value
+    // rearranging a group can raise a score by chance, so a bar never runs below zero; the table keeps the true value
     draw: (b, w) => barsH(b, w, { rows: rows.map((r) => ({ ...r, value: Math.max(r.value, 0), color: r.used === false ? "context" : color })), color, format: two, labelWidth: Math.min(w * 0.6, 178) }),
     table,
   });
@@ -19,17 +19,17 @@ async function boot() {
   const M = await getJSON("methodology.json");
   chart("importance-income", {
     title: "Inputs the income model relies on",
-    sub: "Fall in R² on held-out areas when each group of inputs is scrambled.",
+    sub: "Reduction in R² on held-out areas when each group of inputs is randomly rearranged.",
     rows: M.importance.income,
     color: "income",
-    table: () => ({ headers: ["Inputs", "Number of inputs", "R² when scrambled", "Fall in R²"], numeric: [0, 1, 1, 1], rows: M.importance.income.map((r) => [r.label, r.inputs, three(r.score), three(r.value)]) }),
+    table: () => ({ headers: ["Inputs", "Number of inputs", "R² when rearranged", "Reduction in R²"], numeric: [0, 1, 1, 1], rows: M.importance.income.map((r) => [r.label, r.inputs, three(r.score), three(r.value)]) }),
   });
   chart("importance-poverty", {
     title: "Inputs the poverty model relies on",
-    sub: "Fall in rank correlation on held-out surveys when each group of inputs is scrambled.",
+    sub: "Reduction in rank correlation on held-out surveys when each group of inputs is randomly rearranged.",
     rows: M.importance.poverty,
     color: "poverty",
-    table: () => ({ headers: ["Inputs", "Number of inputs", "Rank correlation when scrambled", "Fall"], numeric: [0, 1, 1, 1], rows: M.importance.poverty.map((r) => [r.label, r.inputs, three(r.score), three(r.value)]) }),
+    table: () => ({ headers: ["Inputs", "Number of inputs", "Rank correlation when rearranged", "Reduction"], numeric: [0, 1, 1, 1], rows: M.importance.poverty.map((r) => [r.label, r.inputs, three(r.score), three(r.value)]) }),
   });
   chart("models-income", {
     title: "Income models compared",

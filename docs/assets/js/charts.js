@@ -1,6 +1,6 @@
 // Hand-built SVG charts. Thin marks, solid hairline grids, rounded data ends, surface rings on dots, a hover layer on
 // everything. Colors come from CSS custom properties, so light and dark mode need no redraw.
-import { s, tip, fmt } from "./lib.js?b=8d2b5ae6e9";
+import { s, tip, fmt } from "./lib.js?b=86474bfb9b";
 
 export const scale = (d0, d1, r0, r1) => {
   const f = (v) => r0 + ((v - d0) / (d1 - d0 || 1)) * (r1 - r0);

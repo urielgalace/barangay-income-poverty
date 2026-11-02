@@ -1,7 +1,7 @@
 // Version history, laid out like a document's history: a dated list on the side, the differences in the main pane.
-import { getJSON, fmt, h, figure, combobox } from "./lib.js?b=8d2b5ae6e9";
-import { columns } from "./charts.js?b=8d2b5ae6e9";
-import { searchPlaces, placeSub } from "./places.js?b=8d2b5ae6e9";
+import { getJSON, fmt, h, figure, combobox } from "./lib.js?b=86474bfb9b";
+import { columns } from "./charts.js?b=86474bfb9b";
+import { searchPlaces, placeSub } from "./places.js?b=86474bfb9b";
 
 const SIGN = { Added: ["add", "+"], Fixed: ["chg", "~"], Changed: ["chg", "~"], Removed: ["del", "−"] };
 let V;
@@ -163,7 +163,7 @@ function render() {
   main.replaceChildren();
   const B = byId(to);
   const A = from ? byId(from) : null;
-  main.append(h("header", { class: "fig-head" }, h("div", { class: "eyebrow", text: `${B.id} · ${fmt.date(B.date)}${B.time_note ? `, ${B.time_note}` : ""}` }), h("h2", { text: B.label }), h("p", { class: "lede", style: "font-size:1.125rem", text: B.summary })));
+  main.append(h("header", { class: "fig-head" }, h("div", { class: "eyebrow", text: `${B.id} · ${fmt.date(B.date)}${B.time_note ? `, ${B.time_note}` : ""}` }), h("h2", { text: B.label }), B.summary ? h("p", { class: "lede", style: "font-size:1.125rem", text: B.summary }) : null));
   const notAdjacent = A && older(B.id) !== A.id;
   if (notAdjacent) main.append(h("p", { class: "small", text: `You are comparing ${A.id} with ${B.id}, which spans ${list().findIndex((v) => v.id === A.id) - list().findIndex((v) => v.id === B.id)} versions. The changes listed below are those made in ${B.id} itself. The numbers cover the whole span.` }));
   section(main, A ? `What changed in ${B.id}` : `Included in ${B.id}`, A ? diffLines(B.changes) : h("div", { class: "prose" }, h("ul", {}, B.changes.map(([, text]) => h("li", { text })))));

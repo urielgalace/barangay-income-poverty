@@ -12,7 +12,7 @@ CURRENT = "v1.0"
 VERSIONS = [
     dict(
         id="v1.0", date="2026-10-30", time_note=None, label="National dataset for 2025",
-        summary="Estimates of average monthly household income and poverty incidence for all 42,010 barangays in the Philippines, for 2025.",
+        summary="",
         scope="All 42,010 barangays, on 42,000 mapped units",
         levels_from="FIES 2025 income and PSA 2025 poverty, both preliminary; PSA's 2023 municipal small-area estimates",
         data="outputs/national_barangay_income_poverty_2025.csv",
@@ -21,9 +21,9 @@ VERSIONS = [
             ("Added", "Income and poverty estimates for every barangay, including 90% margins of error, as well as estimates for cities, municipalities, provinces, and regions."),
             ("Added", "Estimates benchmarked to official 2025 figures at the regional, provincial, and NCR district levels, and to the PSA’s 2023 small-area estimates at the city and municipal levels."),
             ("Added", "Barangay income estimates from a model trained on provincial and city-level FIES data, and poverty estimates from a model trained on door-to-door survey data covering 6,618 barangays."),
-            ("Added", "Population and household counts drawn directly from the official 2024 census."),
+            ("Added", "Population and household counts taken directly from the official 2024 census."),
             ("Added", "Barangay classifications based on the PSA’s geographic codes for the third quarter of 2026, mapped onto 2023 boundaries."),
-            ("Added", "No estimates for 12 barangays with zero residents in the 2024 census or 21 geographic polygons that do not correspond to barangays, including forests and parks."),
+            ("Added", "Estimates are excluded for 12 barangays with no recorded residents in the 2024 census and 21 geographic polygons that do not correspond to barangays, including forests and parks."),
         ]),
 ]
 

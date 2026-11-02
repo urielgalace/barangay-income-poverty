@@ -527,7 +527,7 @@ def write_meta(d, e, items, reg_rows):
     return meta
 
 
-# ------------------------------------------------------------------------------------------------- reliability
+# ------------------------------------------------------------------------------------------------- validation
 def parse_logs():
     logs = PROCESSED / "experiment_logs"
     out = {}
@@ -712,7 +712,7 @@ def pair_share(o, col):
     return right / total
 
 
-IMPORTANCE_LABELS = {"Buildings and settlement form": "Buildings and settlement", "AlphaEarth satellite embeddings": "AlphaEarth embeddings"}
+IMPORTANCE_LABELS = {"Buildings and settlement form": "Buildings and settlements", "AlphaEarth satellite embeddings": "AlphaEarth embeddings", "Terrain and access": "Terrain and accessibility"}
 
 
 def write_methodology(e):
