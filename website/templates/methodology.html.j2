@@ -95,7 +95,8 @@
     <div class="sub">
       <h3>The household income model</h3>
       <div class="prose">
-        <p>The FIES publishes average household income for provinces and selected cities, but not for individual barangays. Consequently, the income model is trained using data from larger geographic areas.</p>
+        <p>The FIES publishes average annual family income for provinces and selected cities, but not for individual barangays. Consequently, the income model is trained using data from larger geographic areas.</p>
+        <p>This site reports these figures as household income per month, dividing the annual figure by 12. A household can include more than one family, so the two measures differ slightly.</p>
         <p>For each province and city in 2021, 2023, and 2025, the model estimates household income relative to the national average for that year. Expressing income in relative terms accounts for changes in national income over time.</p>
         <p>The model uses the 99 geographic and census measures, averaged across households within each area, together with the area’s estimated poverty rate.</p>
         <p>These relationships are subsequently applied to individual barangays using their own characteristics and estimated poverty rates. This requires assuming that relationships observed across provinces and cities also apply within them.</p>
@@ -275,7 +276,7 @@
         <summary>Satellite and geographic data from Google Earth Engine</summary>
         <div class="inner">
           <p>Satellite and geographic measures were extracted for each polygon for 2018, 2021, 2023, and 2025.</p>
-          <p>Polygon boundaries were simplified by no more than 11 meters to reduce computational requirements. Open-sea areas, identified by a value of −200 in the Global Human Settlement Layer (GHSL), were excluded.</p>
+          <p>Polygon boundaries were simplified by no more than 11 meters to reduce computational requirements. Open-sea cells, coded as −200 in the Global Human Settlement Layer (GHSL), were set to zero.</p>
           <div class="tv flat"><table>
             <thead><tr><th scope="col">Data</th><th scope="col">Earth Engine asset</th><th scope="col">Used as</th><th scope="col">Years</th></tr></thead>
             <tbody>{% for a, b, c, d in satellite %}<tr><td>{{ a }}</td><td><code>{{ b }}</code></td><td>{{ c }}</td><td>{{ d }}</td></tr>{% endfor %}</tbody>

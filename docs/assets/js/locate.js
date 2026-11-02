@@ -1,6 +1,6 @@
 // The search box's suggestion. With the visitor's permission, the browser's location is matched to a barangay here in
 // the page: it is never sent anywhere, and the site only loads the map file for that province. Without it, a random one.
-import { getJSON, objects } from "./lib.js?b=86474bfb9b";
+import { getJSON, objects } from "./lib.js?b=37970f11b8";
 
 const MAX_ACCURACY_M = 1500;   // past this a barangay would be a guess, so suggest the city or municipality instead
 

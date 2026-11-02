@@ -1,8 +1,8 @@
 // The interactive map. Cities and municipalities load at once; barangays load province by province as you zoom in.
-import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=86474bfb9b";
-import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=86474bfb9b";
-import { searchPlaces, placeSub } from "./places.js?b=86474bfb9b";
-import { lineChart } from "./charts.js?b=86474bfb9b";
+import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=37970f11b8";
+import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=37970f11b8";
+import { searchPlaces, placeSub } from "./places.js?b=37970f11b8";
+import { lineChart } from "./charts.js?b=37970f11b8";
 
 const BGY_MIN_ZOOM = 8;
 const MAX_CHUNKS = 28;

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-build="86474bfb9b">
+<html lang="en" data-build="37970f11b8">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/site.css?b=86474bfb9b">
+<link rel="stylesheet" href="assets/site.css?b=37970f11b8">
 <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
 
 </head>
@@ -140,7 +140,8 @@
     <div class="sub">
       <h3>The household income model</h3>
       <div class="prose">
-        <p>The FIES publishes average household income for provinces and selected cities, but not for individual barangays. Consequently, the income model is trained using data from larger geographic areas.</p>
+        <p>The FIES publishes average annual family income for provinces and selected cities, but not for individual barangays. Consequently, the income model is trained using data from larger geographic areas.</p>
+        <p>This site reports these figures as household income per month, dividing the annual figure by 12. A household can include more than one family, so the two measures differ slightly.</p>
         <p>For each province and city in 2021, 2023, and 2025, the model estimates household income relative to the national average for that year. Expressing income in relative terms accounts for changes in national income over time.</p>
         <p>The model uses the 99 geographic and census measures, averaged across households within each area, together with the area’s estimated poverty rate.</p>
         <p>These relationships are subsequently applied to individual barangays using their own characteristics and estimated poverty rates. This requires assuming that relationships observed across provinces and cities also apply within them.</p>
@@ -320,7 +321,7 @@
         <summary>Satellite and geographic data from Google Earth Engine</summary>
         <div class="inner">
           <p>Satellite and geographic measures were extracted for each polygon for 2018, 2021, 2023, and 2025.</p>
-          <p>Polygon boundaries were simplified by no more than 11 meters to reduce computational requirements. Open-sea areas, identified by a value of −200 in the Global Human Settlement Layer (GHSL), were excluded.</p>
+          <p>Polygon boundaries were simplified by no more than 11 meters to reduce computational requirements. Open-sea cells, coded as −200 in the Global Human Settlement Layer (GHSL), were set to zero.</p>
           <div class="tv flat"><table>
             <thead><tr><th scope="col">Data</th><th scope="col">Earth Engine asset</th><th scope="col">Used as</th><th scope="col">Years</th></tr></thead>
             <tbody><tr><td>Nighttime lights</td><td><code>NOAA/VIIRS/DNB/ANNUAL_V21, _V22</code></td><td>Average radiance</td><td>2018, 2021, 2023, 2025</td></tr><tr><td>AlphaEarth embeddings</td><td><code>GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL</code></td><td>64 learned land-surface features</td><td>2018, 2021, 2023, 2025</td></tr><tr><td>Sentinel-2</td><td><code>COPERNICUS/S2_SR_HARMONIZED</code></td><td>NDVI, NDBI, NDWI, and greenness of built-up areas</td><td>2021, 2023, 2025. Too sparse before 2019</td></tr><tr><td>Open Buildings</td><td><code>GOOGLE/Research/open-buildings-temporal/v1</code></td><td>Building count, height, presence</td><td>2018, 2021, 2023; 2023 stands in for 2025</td></tr><tr><td>GHSL built surface and volume</td><td><code>JRC/GHSL/P2023A/GHS_BUILT_S, GHS_BUILT_V</code></td><td>Built-up area and volume</td><td>Nearest five-year epoch</td></tr><tr><td>GHSL population</td><td><code>JRC/GHSL/P2023A/GHS_POP</code></td><td>Satellite population, for ratios only</td><td>Nearest five-year epoch</td></tr><tr><td>MODIS land temperature</td><td><code>MODIS/061/MOD11A2</code></td><td>Mean daytime temperature</td><td>2018, 2021, 2023, 2025</td></tr><tr><td>GHSL settlement form</td><td><code>JRC/GHSL/P2023A/GHS_BUILT_C, GHS_BUILT_H</code></td><td>Residential density classes, roads, greenery, building height</td><td>One time, 2018</td></tr><tr><td>SRTM elevation</td><td><code>USGS/SRTMGL1_003</code></td><td>Elevation and slope</td><td>One time</td></tr><tr><td>Travel time</td><td><code>Malaria Atlas Project accessibility layers</code></td><td>Time to the nearest city and health facility</td><td>2015, 2019</td></tr></tbody>
@@ -442,7 +443,7 @@
     <div class="theme-switch" id="theme-switch"><span>Theme</span></div>
   </div>
 </footer>
-<script type="module">import { initTheme } from "./assets/js/lib.js?b=86474bfb9b"; initTheme();</script>
-<script type="module" src="assets/js/methodology.js?b=86474bfb9b"></script>
+<script type="module">import { initTheme } from "./assets/js/lib.js?b=37970f11b8"; initTheme();</script>
+<script type="module" src="assets/js/methodology.js?b=37970f11b8"></script>
 </body>
 </html>
