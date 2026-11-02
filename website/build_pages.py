@@ -23,14 +23,14 @@ DATA = DOCS / "data"
 STATIC = ROOT / "website" / "static"
 CACHE = ROOT / "website" / ".cache"
 CODE_PUBLIC = False
-NAV = [("map", "Map"), ("trends", "Trends"), ("statistics", "Statistics"), ("methodology", "Methodology"), ("versions", "Versions"), ("about", "About")]
+NAV = [("map", "Map"), ("trends", "Trends"), ("statistics", "Statistics"), ("methodology", "Methodology"), ("versions", "Version history"), ("about", "About")]
 PAGES = {
     "index": ("Barangay Income and Poverty Atlas", "Income and poverty estimates for all 42,010 barangays in the Philippines, based on official data from the Philippine Statistics Authority, satellite imagery and machine learning."),
     "map": ("Map", "Interactive map of household income and poverty in every Philippine barangay, city and municipality, with margins of error."),
     "trends": ("Trends", "Official household income, poverty, poverty line and inequality series from 2018 to 2025 for any Philippine region, province, city or municipality."),
     "statistics": ("Statistics", "Descriptive statistics on household income and poverty in the Philippines in 2025: regions, distribution, concentration, urban and rural, and full tables."),
     "methodology": ("Methodology", "How the barangay income and poverty estimates are made: the machine learning models, how they were tested, and every data source."),
-    "versions": ("Versions", "The current version of the dataset and the data behind it. Future versions will be listed here."),
+    "versions": ("Version history", "The current version of the dataset and the data behind it. Future versions will be listed here."),
     "about": ("About", "About the Barangay Income and Poverty Atlas: common questions, how to report a problem, and credits."),
     "404": ("Page not found", "This page does not exist."),
 }
