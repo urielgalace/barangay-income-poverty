@@ -4,39 +4,30 @@
   <div class="page-title">
     <div class="eyebrow">About</div>
     <h1>About this atlas</h1>
-    <p class="lede">An independent research dataset by Uriel Galace. It is not a product of the Philippine Statistics Authority or any government agency.</p>
   </div>
   <section class="block">
     <header><h2>Common questions</h2></header>
     <div class="prose">
-      <h3>What is a barangay?</h3>
-      <p>The smallest unit of local government in the Philippines. Cities and municipalities are divided into barangays, and the country has {{ meta.barangays|num }} of them.</p>
-      <h3>What does poverty incidence mean?</h3>
-      <p>The share of people in households whose income falls below the official poverty line. In 2025 PSA set the line at ₱{{ meta.line_per_person|round|int|num }} per person per year nationally, about ₱{{ meta.line_family5_month|num }} a month for a family of five. PSA also reports poverty among families, which is lower: {{ meta.poverty_families }}% against {{ meta.poverty }}% among people.</p>
       <h3>Are these official statistics?</h3>
-      <p>Regional figures are PSA's. Provincial figures start from PSA's and are smoothed. Everything below that is an estimate made for this project. PSA did not produce or review it.</p>
-      <h3>Why doesn't my barangay's number look right?</h3>
-      <p>It may well be wrong. Margins of error are wide, and the model works from satellite imagery and a limited set of old surveys. If you know something is off, such as a wrong name or the wrong place, please report it.</p>
-      <h3>Why is the people-in-poverty total different from PSA's?</h3>
-      <p>PSA's {{ "%.2f"|format(meta.poor_official_m) }}M uses its own 2025 population base. This dataset applies rates to the 2024 census and arrives at {{ "%.2f"|format(meta.poor_dataset_m) }}M.</p>
-      <h3>Why are some areas blank?</h3>
-      <p>{{ meta.blank }} barangays had no residents in the 2024 census, and {{ meta.nonbarangay }} polygons are forest land, parks or similar areas that are not barangays.</p>
-      <h3>Can I use this to decide where aid goes?</h3>
-      <p>Not on its own. It can suggest where to look more closely, and decisions about a specific community need local data.</p>
+      <p>Regional figures are drawn directly from the Philippine Statistics Authority (PSA), while provincial figures are based on official estimates adjusted through smoothing. Estimates for barangays were produced independently for this project.</p>
+      <h3>Why does the estimate for my barangay seem inaccurate?</h3>
+      <p>The estimate may indeed be inaccurate. Margins of error are relatively wide, and the model relies on satellite imagery and a limited number of older surveys. If you identify an error, such as an incorrect name or geographic location, please report it.</p>
+      <h3>Why does the estimated number of people living in poverty differ from the PSA's figure?</h3>
+      <p>The PSA estimates that {{ "%.2f"|format(meta.poor_official_m) }} million Filipinos live in poverty, using its own 2025 population base. This dataset applies poverty rates to the 2024 census population, resulting in an estimate of {{ "%.2f"|format(meta.poor_dataset_m) }} million.</p>
+      <h3>Why are some areas left blank?</h3>
+      <p>Twelve barangays had no recorded residents in the 2024 census, while {{ meta.nonbarangay }} geographic polygons correspond to forests, parks, or other areas that are not classified as barangays.</p>
     </div>
   </section>
   <section class="block" id="report">
     <header><h2>Report a problem</h2></header>
     <div class="prose">
-      <p><a href="https://github.com/{{ repo }}/issues/new?template=data-problem.yml">Open an issue on GitHub</a> to report a wrong name, a misplaced barangay, a broken page or a mistake in the methods. Corrections will appear in the <a href="versions.html">version history</a>.</p>
+      <p>Use the <a href="https://github.com/{{ repo }}/issues/new?template=data-problem.yml">GitHub issue tracker</a> to report incorrect names, misplaced barangays, broken pages, or methodological errors. Any corrections will be documented in the <a href="versions.html">version history</a>.</p>
     </div>
   </section>
   <section class="block">
-    <header><h2>Credits and disclosures</h2></header>
+    <header><h2>Credits</h2></header>
     <div class="prose">
       <p>Official statistics come from the Philippine Statistics Authority. Door-to-door barangay data comes from Community-Based Monitoring System reports published by the Partnership for Economic Policy and the City of Bacolod. Boundaries come from the PSGC shapefiles maintained by altcoder and faeldon. Satellite data comes from NOAA, NASA, ESA, the European Commission's Joint Research Centre, Google and the Malaria Atlas Project, accessed through Google Earth Engine.</p>
-      <p>The data processing, analysis code and this website were written with Claude Code, Anthropic's coding assistant, under the author's direction.</p>
-      <p>This site uses no analytics or cookies. Your browser contacts Google Fonts for type, jsDelivr for the map library, and OpenFreeMap for road and place labels. A theme choice is stored only in your own browser. If you allow it, the home page uses your browser's location to suggest your barangay. That is worked out in your browser, and your location is not sent or stored anywhere, though your browser does download the map file for your area from this site.</p>
     </div>
   </section>
 </div>

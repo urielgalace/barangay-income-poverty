@@ -1,6 +1,6 @@
 // Descriptive statistics for 2025: regions, income, distribution, concentration, places, sortable tables.
-import { getJSON, objects, fmt, h, figure, segmented } from "./lib.js?b=4f78ad799d";
-import { barsH, dumbbell, columns, stackedH, lineChart, scatter } from "./charts.js?b=4f78ad799d";
+import { getJSON, objects, fmt, h, figure, segmented } from "./lib.js?b=8d2b5ae6e9";
+import { barsH, dumbbell, columns, stackedH, lineChart, scatter } from "./charts.js?b=8d2b5ae6e9";
 
 const pctF = (v) => `${v.toFixed(1)}%`;
 

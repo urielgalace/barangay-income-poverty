@@ -1,5 +1,5 @@
 name: Report a data problem
-description: A wrong name, a misplaced barangay, a broken page or a mistake in the methods
+description: A wrong name, a misplaced barangay, a broken page or a mistake in the methodology
 title: "Data problem: "
 body:
   - type: input

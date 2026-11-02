@@ -18,12 +18,12 @@ VERSIONS = [
         data="outputs/national_barangay_income_poverty_2025.csv",
         columns=("poverty_rate_2025", "income_k_2025", "population_2024"),
         changes=[
-            ("Added", "Income and poverty estimates for every barangay, each with a 90% margin of error, along with figures for cities, municipalities, provinces and regions."),
-            ("Added", "Levels from official 2025 figures at region, province and NCR district level, and from PSA's 2023 small-area pattern at city and municipal level."),
-            ("Added", "Barangay income from a model trained on FIES provinces and cities, and barangay poverty from a model trained on 6,618 barangays of door-to-door survey data."),
-            ("Added", "Population and households from the official 2024 census, not modeled."),
-            ("Added", "The barangay list from PSA's geographic code for the third quarter of 2026, mapped on 2023 boundaries, the newest available in usable form."),
-            ("Added", "12 barangays with no residents in the 2024 census, and 21 polygons that are not barangays, such as forest land and parks, are left blank."),
+            ("Added", "Income and poverty estimates for every barangay, including 90% margins of error, as well as estimates for cities, municipalities, provinces, and regions."),
+            ("Added", "Estimates benchmarked to official 2025 figures at the regional, provincial, and NCR district levels, and to the PSA’s 2023 small-area estimates at the city and municipal levels."),
+            ("Added", "Barangay income estimates from a model trained on provincial and city-level FIES data, and poverty estimates from a model trained on door-to-door survey data covering 6,618 barangays."),
+            ("Added", "Population and household counts drawn directly from the official 2024 census."),
+            ("Added", "Barangay classifications based on the PSA’s geographic codes for the third quarter of 2026, mapped onto 2023 boundaries."),
+            ("Added", "No estimates for 12 barangays with zero residents in the 2024 census or 21 geographic polygons that do not correspond to barangays, including forests and parks."),
         ]),
 ]
 

@@ -1,0 +1,286 @@
+{% extends "base.html.j2" %}
+{% block main %}
+<div class="wrap">
+  <div class="page-title">
+    <div class="eyebrow">Methodology</div>
+    <h1>How the estimates are made</h1>
+    <p class="lede">The Philippine Statistics Authority (PSA) publishes income and poverty figures for regions and provinces, but not for individual barangays. This project uses machine learning to estimate how income and poverty differ among barangays, and then adjusts those estimates so that they agree with the official figures.</p>
+    <nav class="jump" aria-label="On this page">
+      <a href="#approach">The approach</a>
+      <a href="#levels">Where each figure comes from</a>
+      <a href="#models">The machine learning models</a>
+      <a href="#tests">How the models were tested</a>
+      <a href="#collection">How the data were collected</a>
+      <a href="#sources">Data sources</a>
+    </nav>
+  </div>
+
+  <section class="block" id="approach">
+    <header><h2>The approach in four steps</h2></header>
+    <ol class="approach">
+      <li><b>Start with official figures</b><span>The PSA’s published income and poverty figures set the level for each region and province.</span></li>
+      <li><b>Train the models</b><span>Machine learning models learn how satellite imagery and census data relate to income and poverty in places where both are known.</span></li>
+      <li><b>Estimate every barangay</b><span>The trained models use each barangay’s own imagery and census data to estimate how it compares with other places.</span></li>
+      <li><b>Match the official totals</b><span>The estimates are adjusted so that barangays add up to the official figure for their area, and each receives a margin of error.</span></li>
+    </ol>
+    <div class="prose">
+      <p>The idea rests on a simple observation. Two barangays in the same municipality can look very different from above: one may have dense housing and bright lights at night, and the other scattered homes and little light after dark. These visible differences are related to living standards. Where door-to-door surveys have measured poverty, a model can learn that relationship and then apply it to barangays that have not been surveyed.</p>
+      <p>The models do not decide how wealthy or how poor a province is. Official figures determine that. The models determine only how those totals are divided among barangays.</p>
+    </div>
+  </section>
+
+  <section class="block" id="levels">
+    <header><h2>Where each figure comes from</h2></header>
+    <div class="tv flat"><table>
+      <thead><tr><th scope="col">Level</th><th scope="col">Household income</th><th scope="col">Poverty</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Region</th><td>Official 2025 figures from the Family Income and Expenditure Survey (FIES).</td><td>Official 2025 figures, reproduced exactly.</td></tr>
+        <tr><th scope="row">Province, NCR district or city</th><td>Official 2025 FIES figures for 82 provinces and 36 cities, used as published.</td><td>Official 2025 figures, smoothed with a Fay-Herriot model and then re-benchmarked to the regional totals.</td></tr>
+        <tr><th scope="row">City or municipality</th><td>The household-weighted average of the barangay estimates.</td><td>The PSA’s 2023 small-area estimates, shifted to reach the 2025 provincial figure.</td></tr>
+        <tr><th scope="row">Barangay</th><td><strong>Machine learning estimate</strong>, adjusted to match the FIES figure for its province or city.</td><td><strong>Machine learning estimate</strong>, adjusted to match the figure for its city or municipality.</td></tr>
+      </tbody>
+    </table></div>
+    <details>
+      <summary>How the official figures are prepared</summary>
+      <div class="prose">
+        <p><strong>Household income.</strong> FIES publishes coefficients of variation in Table 3, with a median of 3.9% and a highest value of 14.7% in Samar. No figure is unusable, so income levels are kept as published.</p>
+        <p><strong>Provincial poverty.</strong> The PSA reports four provinces at under 0.05% poverty for 2025: Ilocos Norte, Aklan, Nueva Ecija and Zamboanga Sibugay. The last two were 10.2% and 24.2% in 2023. A Fay-Herriot model on the log-odds scale combines each direct estimate with what the 2023 level and the regional change imply, trusting the direct estimate in proportion to its precision. Each region is then shifted so that its total matches the PSA’s. The eight municipalities of the Special Geographic Area have no published row, so their level is the official BARMM total minus its listed provinces. This choice is debatable, and an out-of-time test shows no clear gain from it.</p>
+        <p><strong>City and municipal poverty.</strong> {{ "1,597" }} cities and municipalities use their 2023 small-area estimate, shifted on the log-odds scale until their province reaches its 2025 figure. Highly urbanized cities use their own 2023 figures, smoothed against their earlier record. Manila uses its 14 sub-municipalities. Nine places with no official sub-area figure use a machine learning model trained on differences among municipalities.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="block" id="models">
+    <header><h2>The machine learning models</h2><p class="small">Two models produce the barangay estimates. They differ because the available data differ: income is published only for large areas, whereas poverty has been measured barangay by barangay in parts of the country.</p></header>
+    <div class="tv flat"><table>
+      <thead><tr><th scope="col"></th><th scope="col"><span class="key dot c-income"></span> Household income model</th><th scope="col"><span class="key dot c-poverty"></span> Poverty model</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">What it estimates</th><td>How a place’s average income compares with the national average.</td><td>How far a barangay’s poverty rate sits above or below the average of its municipality.</td></tr>
+        <tr><th scope="row">What it learns from</th><td>Official FIES figures for 82 provinces and 36 cities in 2021, 2023 and 2025.</td><td>Door-to-door surveys of {{ method.poverty.n|num }} barangays in {{ method.poverty.munis }} cities and municipalities, from {{ method.poverty.reports }} reports dated {{ method.coverage.year_min }} to {{ method.coverage.year_max }}.</td></tr>
+        <tr><th scope="row">Inputs</th><td>99 satellite, map and census measures, plus the estimated poverty rate.</td><td>The same 99 measures, each expressed relative to the municipal average.</td></tr>
+        <tr><th scope="row">Algorithm</th><td>An equal blend of ridge regression and gradient boosting.</td><td>Gradient boosting.</td></tr>
+        <tr><th scope="row">Imagery used for the estimates</th><td>2025.</td><td>2025. The model is trained on 2021 imagery.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub">
+      <h3>What the models see</h3>
+      <p class="small" style="max-width:74ch">Both models use the same 99 measures of each place. Most come from satellite imagery, and the rest from maps and the 2024 census.</p>
+      <div class="tv flat"><table>
+        <thead><tr><th scope="col">Group</th><th scope="col" class="n">Inputs</th><th scope="col">What it measures</th><th scope="col">What it can reveal</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Nighttime lights</th><td class="n">4</td><td>Brightness at night, also relative to population and built-up area.</td><td>Electrification and economic activity.</td></tr>
+          <tr><th scope="row">Buildings and settlement</th><td class="n">15</td><td>Building counts and heights, built-up area and volume, residential density classes, roads and greenery.</td><td>How densely and how solidly a place is built.</td></tr>
+          <tr><th scope="row">Land cover and temperature</th><td class="n">5</td><td>Vegetation, built-up and water indices, greenery within built-up areas, and daytime surface temperature.</td><td>Green space, water, and the character of the built environment.</td></tr>
+          <tr><th scope="row">AlphaEarth embeddings</th><td class="n">64</td><td>Google’s learned numerical summaries of the land surface.</td><td>Visual patterns that simple measures can miss.</td></tr>
+          <tr><th scope="row">Terrain and access</th><td class="n">4</td><td>Elevation, slope, and travel time to the nearest city and health facility.</td><td>Remoteness.</td></tr>
+          <tr><th scope="row">Population and census</th><td class="n">7</td><td>Population density, household size, urban or rural status, the share of people outside households, and crowding.</td><td>How people live and how closely they live together.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small" style="max-width:74ch">To see which inputs each model relies on, each group was scrambled in turn on data the model had not seen, and the resulting fall in its score was recorded. A larger fall means greater reliance. Because the groups overlap, one group can stand in for another when it is scrambled, so these bars understate the role of each. For poverty, how densely and how solidly a place is built carries most of the model’s skill within a municipality. For income, which is learned across provinces and cities, land cover and temperature, the estimated poverty rate and the AlphaEarth embeddings matter most.</p>
+      <div class="two"><div id="importance-income"></div><div id="importance-poverty"></div></div>
+    </div>
+
+    <div class="sub">
+      <h3>How the algorithms work</h3>
+      <div class="prose">
+        <p><strong>Gradient boosting.</strong> A decision tree makes a prediction by asking a short series of yes-or-no questions, such as whether a barangay is brighter at night than its municipal average. Gradient boosting builds many small trees in sequence, with each new tree correcting the errors left by the trees before it. The final prediction adds together the small contributions of all the trees. This allows the model to capture thresholds and combinations of inputs that a simple formula would miss. The poverty model uses 300 trees, and the income model uses 200.</p>
+        <p><strong>Ridge regression.</strong> Ridge regression multiplies each input by a weight and adds the results, with a penalty that keeps any single weight from growing too large. It is less flexible than gradient boosting, but it tends to behave more predictably for places unlike those in its training data.</p>
+        <p><strong>Averaging.</strong> Gradient boosting involves random choices, so two runs on the same data give slightly different answers. Each model therefore averages ten runs with different random seeds, which reduced this variation about threefold without changing the held-out scores.</p>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>The household income model</h3>
+      <div class="prose">
+        <p>FIES reports average income for provinces and some cities, so no income data exist for individual barangays. The model therefore learns across larger areas. For each province and city in 2021, 2023 and 2025, it learns how the area’s average income compares with the national average in the same year, which removes the effect of general income growth. Its inputs are the 99 measures above, averaged across the area’s households, plus the area’s estimated poverty rate.</p>
+        <p>The model is then applied to each barangay’s own measures and estimated poverty rate. This step assumes that the relationship seen across provinces and cities also holds across barangays. To limit the risk, each input is capped at the range seen in training, so that a barangay more extreme than any province or city cannot produce an extreme prediction.</p>
+        <p>The final model blends two algorithms equally. Gradient boosting explained more of the differences among held-out areas overall (R² of {{ "%.2f"|format(method.income.boost) }}, against {{ "%.2f"|format(method.income.ridge) }}), while ridge regression ranked the held-out Metro Manila cities better (a rank correlation of {{ "%.2f"|format(method.income.ncr_ridge) }}, against {{ "%.2f"|format(method.income.ncr_boost) }}). The blend scored higher than either, with an R² of {{ "%.2f"|format(method.income.r2) }}.</p>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>The poverty model</h3>
+      <div class="prose">
+        <p>The only published barangay-level poverty data found are reports from the Community-Based Monitoring System (CBMS), in which households were surveyed door to door. The {{ method.poverty.reports }} reports cover {{ method.poverty.n|num }} barangays, but they date from {{ method.coverage.year_min }} to {{ method.coverage.year_max }} and use different local poverty lines, so their levels cannot be compared with today’s figures or with one another.</p>
+        <p>The model therefore learns only relative differences. For each surveyed barangay, it learns how far the barangay’s poverty rate sits from the average in its municipality, given how far its inputs sit from the municipal average. This approach assumes that the pattern of poverty within a municipality changes slowly, even when overall levels change. Training uses imagery from 2021, the earliest complete year, and the final estimates use imagery from 2025.</p>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Matching the official totals</h3>
+      <div class="prose">
+        <p>The models’ raw predictions are then adjusted so that barangays add up to the official figure for their area. The adjustment preserves the order of barangays within an area and changes only the overall level.</p>
+        <p><strong>A simplified example.</strong> Consider a municipality with three barangays of equal population and a poverty rate of 20%. The model gives each barangay a relative score, and all three scores are shifted by the same amount (−1.48) until the average reaches 20%. The shift is applied to log-odds, a transformation of a rate that keeps every result between 0% and 100%.</p>
+      </div>
+      <div class="tv flat" style="max-width:640px"><table>
+        <thead><tr><th scope="col"></th><th scope="col" class="n">Barangay A</th><th scope="col" class="n">Barangay B</th><th scope="col" class="n">Barangay C</th><th scope="col" class="n">Average</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Model’s relative score</th><td class="n">+0.7</td><td class="n">0.0</td><td class="n">−0.7</td><td class="n"></td></tr>
+          <tr><th scope="row">Poverty rate after adjustment</th><td class="n">31.4%</td><td class="n">18.5%</td><td class="n">10.1%</td><td class="n">20.0%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small" style="max-width:74ch">Actual calculations weight each barangay by its population. Income is adjusted in the same way: every barangay in a province or city is multiplied by the same factor, so that the household-weighted average equals the FIES figure.</p>
+    </div>
+
+    <div class="sub">
+      <h3>Margins of error</h3>
+      <div class="prose">
+        <p>Each estimate carries a 90% interval. For household income, the interval combines the income model’s error on held-out areas with the effect of the error in the barangay’s poverty estimate. For poverty, it combines three sources of error: the uncertainty in the official area figure, the error in the municipal pattern, and the error in the barangay pattern on held-out surveys, which is larger in rural barangays than in urban ones.</p>
+        <p>These intervals are approximate, because the parts were tested separately and the whole was not. On held-out surveys, the barangay part of the poverty interval contained the surveyed value {{ "%.0f"|format(method.poverty.coverage) }}% of the time, close to its 90% target.</p>
+      </div>
+    </div>
+
+    <details>
+      <summary>Model settings</summary>
+      <div class="tv flat" style="max-width:760px"><table>
+        <thead><tr><th scope="col">Setting</th><th scope="col"><span class="key dot c-income"></span> Income model</th><th scope="col"><span class="key dot c-poverty"></span> Poverty model</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Gradient boosting library</th><td colspan="2">scikit-learn HistGradientBoostingRegressor</td></tr>
+          <tr><th scope="row">Trees</th><td>200</td><td>300</td></tr>
+          <tr><th scope="row">Learning rate</th><td>0.04</td><td>0.03</td></tr>
+          <tr><th scope="row">Maximum leaves per tree</th><td>7</td><td>15</td></tr>
+          <tr><th scope="row">Minimum observations per leaf</th><td>8</td><td>25</td></tr>
+          <tr><th scope="row">L2 penalty</th><td>2</td><td>5</td></tr>
+          <tr><th scope="row">Share of inputs considered at each split</th><td colspan="2">50%</td></tr>
+          <tr><th scope="row">Random seeds averaged</th><td colspan="2">10</td></tr>
+          <tr><th scope="row">Ridge regression</th><td>Inputs standardized, missing values set to the median, penalty chosen by cross-validation from 0.01 to 10,000.</td><td>Not used.</td></tr>
+          <tr><th scope="row">Target</th><td>Log of area income divided by national income.</td><td>Log-odds of the poverty rate, minus the municipal mean.</td></tr>
+          <tr><th scope="row">Training rows</th><td>{{ method.income.rows }} area-years</td><td>{{ method.poverty.n|num }} barangays</td></tr>
+        </tbody>
+      </table></div>
+    </details>
+  </section>
+
+  <section class="block" id="tests">
+    <header><h2>How the models were tested</h2><p class="small">A model can appear accurate simply by memorizing its training data. Every score below therefore comes from data the model did not see during training. For the income model, each province was set aside together with its cities. For the poverty model, each of the {{ method.poverty.reports }} survey reports was set aside in turn.</p></header>
+    <dl class="stats quad">
+      <div class="stat"><dt>Income: differences explained</dt><dd>{{ "%.2f"|format(method.income.r2) }}</dd><div class="d">R² on held-out provinces and cities</div></div>
+      <div class="stat"><dt>Income: average error</dt><dd>{{ "%.0f"|format(method.income.error) }}%</dd><div class="d">On held-out provinces and cities</div></div>
+      <div class="stat"><dt>Poverty: rank correlation</dt><dd>{{ "%.2f"|format(method.poverty.rho) }}</dd><div class="d">Within a municipality. 1 is a perfect ordering, and 0 is no relationship</div></div>
+      <div class="stat"><dt>Poverty: pairs ordered correctly</dt><dd>{{ "%.0f"|format(method.poverty.pair) }}%</dd><div class="d">The poorer of two barangays in a municipality. 50% by chance</div></div>
+    </dl>
+    <div class="two"><div id="models-income"></div><div id="models-poverty"></div></div>
+    <div class="prose">
+      <p>The comparison shows what the models add over simpler approaches. For income, the poverty rate alone reaches an R² of {{ "%.2f"|format(method.income.poverty_alone) }}, and the final model raises this to {{ "%.2f"|format(method.income.r2) }}. For poverty, nighttime lights alone reach a rank correlation of {{ "%.2f"|format(method.poverty.lights) }}, close to the final model’s {{ "%.2f"|format(method.poverty.rho) }}, so the gain is real but modest. The gain is larger in the five surveyed cities ({{ "%.2f"|format(method.poverty.rho_cities) }}, against {{ "%.2f"|format(method.poverty.lights_cities) }}), although scores for individual cities vary. Training directly on barangays also outperforms applying a model trained on municipal figures ({{ "%.2f"|format(method.poverty.rho) }}, against {{ "%.2f"|format(method.poverty.municipal) }}).</p>
+      <p>Two further checks support the models. When a province and its cities were set aside, the income model recovered how much wealthier a city is than the rest of its province with a correlation of {{ "%.2f"|format(method.income.gap_corr) }}, and its typical error was about {{ "%.0f"|format(method.income.gap_ratio * 100) }}% of the error from assuming no difference. The final poverty model also matched the PSA’s small-area estimates in {{ method.poverty.cross_provinces }} provinces that contributed no surveys, with a rank correlation of {{ "%.2f"|format(method.poverty.cross_rho) }}. Because the small-area estimates share some inputs with the model, this is supporting evidence rather than an independent test.</p>
+      <h3>What the tests cannot show</h3>
+      <ul>
+        <li>The surveys are old and partial. They cover {{ "%.0f"|format(method.coverage.people) }}% of the population in {{ method.coverage.regions }} of {{ method.coverage.regions_total }} regions, and {{ "%.0f"|format(method.coverage.early) }}% of the surveyed barangays come from reports begun by 2008. Accuracy for 2025 itself cannot be measured.</li>
+        <li>Barangay income has no direct test, because no barangay-level income data exist.</li>
+        <li>The models tend to underrate very wealthy, low-density neighborhoods. For example, Forbes Park ranks {{ method.forbes.rank }}th of {{ method.forbes.of }} barangays in Makati for income.</li>
+      </ul>
+      <p>A separate script recomputes every published figure from the source files and labels what each check can show.</p>
+    </div>
+  </section>
+
+  <section class="block" id="collection">
+    <header><h2>How the data were collected</h2><p class="small">The steps below retrace how the data were gathered. Most of the data were gathered on 30 October 2026, and some in June and July. The <a href="versions.html">versions page</a> lists each date.</p></header>
+    <div class="more">
+      <details>
+        <summary>Official statistics from the PSA</summary>
+        <div class="inner">
+          <p>psa.gov.ph sits behind a human check that blocks scripts, so each workbook was downloaded by hand in an ordinary browser. That includes the <em>2025 Full Year Official Poverty Statistics</em> released on 24 August 2026, FIES 2025 preliminary tables 1, 3, 4 and 8, the 2023 poverty workbook, and the municipal small-area estimates for 2018, 2021 and 2023.</p>
+          <p>The 2025 workbook lists provinces, NCR districts and only two cities, so the 2023 workbook supplies city figures and the 2018 round.</p>
+        </div>
+      </details>
+      <details>
+        <summary>The 2024 census from OpenSTAT</summary>
+        <div class="inner">
+          <p>The PSA’s OpenSTAT database has a public PXWeb API that scripts can reach. One query per region returns population, household population and households for every barangay.</p>
+          <pre>curl -X POST "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/1A/PO_2024/&lt;table&gt;.px" \
+  -d '{"query":[...],"response":{"format":"csv"}}'</pre>
+        </div>
+      </details>
+      <details>
+        <summary>Current geography from the PSGC</summary>
+        <div class="inner">
+          <p>The PSGC 3Q 2026 datafile gives {{ meta.barangays|num }} barangays and {{ meta.lgus|num }} cities and municipalities. Its Summary of Changes is the PSA’s own record of merges, new barangays and renames. It gave 19 merges and 5 new barangays since the boundary layer was drawn.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Boundaries, and matching them to current codes</summary>
+        <div class="inner">
+          <p>The newest barangay polygons in usable form are 2023 PSGC shapefiles: {{ "42,048" }} polygons. Every polygon had to be matched to a current barangay, and codes alone are unsafe. Manila’s boundary code ...257 is Barangay 257, but the same PSGC correspondence code is Barangay 256. Maguindanao’s codes were reassigned. Name voting alone swaps Caloocan and Pasay, which both have Barangays 1 to 188.</p>
+          <p>Municipalities therefore match on code first, checked by overlap in barangay names, and barangays match on name within the municipality.</p>
+          <div class="tv flat" style="max-width:560px"><table>
+            <thead><tr><th scope="col">How the polygon was matched</th><th scope="col" class="n">Polygons</th></tr></thead>
+            <tbody>
+              <tr><td>Exact name within the municipality</td><td class="n">41,892</td></tr>
+              <tr><td>Same code, new name</td><td class="n">67</td></tr>
+              <tr><td>Exact name elsewhere in the region, such as EMBO to Taguig</td><td class="n">14</td></tr>
+              <tr><td>Former name listed in the PSGC</td><td class="n">5</td></tr>
+              <tr><td>Close spelling, with the same numbers</td><td class="n">2</td></tr>
+              <tr><td>Merged under the Summary of Changes, into 19 barangays</td><td class="n">46</td></tr>
+              <tr><td>Holding several current barangays</td><td class="n">6</td></tr>
+              <tr><td>Not a barangay: forest land, parks, a cemetery, a mall</td><td class="n">21</td></tr>
+            </tbody>
+          </table></div>
+          <p class="small">All {{ meta.barangays|num }} current barangays are placed, none is left over, and census population on the polygons equals the official total.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Households matched within each city</summary>
+        <div class="inner">
+          <p>The census household tables use different names from the PSGC, and a barangay name with the same population can repeat in another city or municipality. Matching runs in order: city, name and population; then name and population where unique; then population alone where unique. Merged barangays add up their old parts. Households now equal the census in all {{ meta.regions }} regions, {{ meta.households|num }} nationally.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Door-to-door poverty from CBMS reports</summary>
+        <div class="inner">
+          <p>Reports for {{ val.coverage.n_reports - 5 }} provinces and 5 cities, dated {{ val.coverage.year_min }} to {{ val.coverage.year_max }}, were read from PDF with <code>pdftotext -layout</code>, and then matched to the polygons by name within the municipality: {{ val.coverage.n_barangays|num }} barangays in all. Each figure is the share of households below the poverty threshold.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Satellite and map data from Google Earth Engine</summary>
+        <div class="inner">
+          <p>Each polygon’s average was taken for 2018, 2021, 2023 and 2025, simplified by at most 11 m. Open sea, which GHSL codes as -200, is masked out. Each year takes about 10 to 15 minutes with 10 workers, and runs resume where they stopped.</p>
+          <div class="tv flat"><table>
+            <thead><tr><th scope="col">Data</th><th scope="col">Earth Engine asset</th><th scope="col">Used as</th><th scope="col">Years</th></tr></thead>
+            <tbody>{% for a, b, c, d in satellite %}<tr><td>{{ a }}</td><td><code>{{ b }}</code></td><td>{{ c }}</td><td>{{ d }}</td></tr>{% endfor %}</tbody>
+          </table></div>
+        </div>
+      </details>
+      <details>
+        <summary>Meta’s Relative Wealth Index, as an outside check</summary>
+        <div class="inner">
+          <p>The 2.4 km Relative Wealth Index was attached to each polygon only to compare against the finished estimates. It is partly built from satellite imagery, so agreement with it is not fully independent.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="block" id="sources">
+    <header><h2>Data sources</h2><p class="small">Every file used, with the date it entered the project and a SHA-256 checksum, so that you can confirm you hold the same file. Raw source files are not republished here.</p></header>
+    <div>
+    {% for g in sources %}
+      <div class="src">
+        <h3>{{ g.name }}</h3>
+        <p class="small">{{ g.use }}</p>
+        <div class="chips"><span><a href="{{ g.url }}">{{ g.publisher }}</a></span><span>{{ g.access }}</span><span>{{ g.license }}</span></div>
+        <details><summary>{{ g.files|length }} {{ "file" if g.files|length == 1 else "files" }}</summary>
+          <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
+          <tbody>{% for f in g.files %}<tr><td style="word-break:break-word">{{ f.name }}</td><td class="nowrap">{{ f.added }}</td><td class="n">{{ f.size|bytes }}</td><td><span class="hash">{{ f.sha256 }}</span></td></tr>{% endfor %}</tbody></table></div>
+        </details>
+      </div>
+    {% endfor %}
+    </div>
+  </section>
+
+  <section class="block" id="reproduce">
+    <header><h2>Reproducing the estimates</h2></header>
+    <div class="prose">
+      {% if code_public %}
+      <p>The pipeline is in <a href="https://github.com/{{ repo }}">this project’s repository</a>. With the source files in <code>data/raw</code> and the Earth Engine tables in <code>data/interim</code>:</p>
+      <pre>python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+./run_pipeline.sh</pre>
+      <p>It does not redo the browser-only PSA downloads, the Earth Engine extraction, or the model comparisons.</p>
+      {% else %}
+      <p>The steps above and the source list should allow you to rebuild the data. The pipeline code is not public yet. To ask about it, <a href="https://github.com/{{ repo }}/issues/new">open an issue</a>. The code behind this website is in <a href="https://github.com/{{ repo }}">the repository</a>.</p>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="assets/js/methodology.js?b={{ build }}"></script>{% endblock %}

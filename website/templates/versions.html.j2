@@ -2,13 +2,12 @@
 {% block main %}
 <div class="wrap">
   <div class="page-title">
-    <div class="eyebrow">Version history</div>
     {% if n_versions > 1 %}
+    <div class="eyebrow">Version history</div>
     <h1>What changed, and when</h1>
     <p class="lede">Choose a version to see what was added, what was fixed, and how far the numbers moved.</p>
     {% else %}
-    <h1>Data versions</h1>
-    <p class="lede">This site holds one version of the data for now. New versions will be added here as the data is updated, with what changed in each.</p>
+    <h1>Version history</h1>
     {% endif %}
   </div>
   {% if n_versions > 1 %}
@@ -24,7 +23,7 @@
     <div class="rail" id="rail"></div>
   </div>
   <section class="block" style="margin-top:40px">
-    <header><h2>Everything added to the project, by date</h2><p class="small">Taken from each file's own date. Raw files themselves are not republished, and the <a href="methods.html#sources">source list</a> has their checksums.</p></header>
+    <header><h2>Everything added to the project, by date</h2><p class="small">Taken from each file's own date. Raw files themselves are not republished, and the <a href="methodology.html#sources">source list</a> has their checksums.</p></header>
     <ol class="tl" id="full-log"></ol>
   </section>
   {% else %}

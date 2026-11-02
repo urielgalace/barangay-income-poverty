@@ -128,8 +128,7 @@ function added(parent, B, A) {
   const grouped = {};
   rows.forEach((r) => { (grouped[r.date] = grouped[r.date] || []).push(r); });
   const dates = Object.keys(grouped).sort().reverse();
-  const note = A ? null : h("p", { class: "small" }, "Dated by each file. Raw files are not republished, and the ", h("a", { href: "methods.html#sources", text: "source list" }), " has their checksums.");
-  section(parent, A ? "Data added for this version" : "The data behind this version", note, dates.length ? h("ol", { class: "tl" }, dates.map((d) => h("li", {}, h("b", { text: fmt.date(d) }), h("ul", {}, grouped[d].map((r) => h("li", {}, `${r.label} `, h("span", { class: "tiny", text: `· ${r.source}` }))))))) : h("p", { class: "small", text: B.no_new_inputs ? "No new source files. Every change here came from reworking data already in the project." : "None between these versions." }));
+  section(parent, A ? "Data added for this version" : "Data sources", dates.length ? h("ol", { class: "tl" }, dates.map((d) => h("li", {}, h("b", { text: fmt.date(d) }), h("ul", {}, grouped[d].map((r) => h("li", {}, `${r.label} `, h("span", { class: "tiny", text: `· ${r.source}` }))))))) : h("p", { class: "small", text: B.no_new_inputs ? "No new source files. Every change here came from reworking data already in the project." : "None between these versions." }));
 }
 
 function lookup(parent) {
@@ -164,10 +163,10 @@ function render() {
   main.replaceChildren();
   const B = byId(to);
   const A = from ? byId(from) : null;
-  main.append(h("header", { class: "fig-head" }, h("div", { class: "eyebrow", text: `${B.id} · ${fmt.date(B.date)}${B.time_note ? `, ${B.time_note}` : ""}` }), h("h2", { text: B.label }), h("p", { class: "lede", style: "font-size:1.125rem", text: B.summary }), h("div", { class: "chips" }, h("span", { text: `Covers: ${B.scope}` }), h("span", { text: `Levels from: ${B.levels_from}` }))));
+  main.append(h("header", { class: "fig-head" }, h("div", { class: "eyebrow", text: `${B.id} · ${fmt.date(B.date)}${B.time_note ? `, ${B.time_note}` : ""}` }), h("h2", { text: B.label }), h("p", { class: "lede", style: "font-size:1.125rem", text: B.summary })));
   const notAdjacent = A && older(B.id) !== A.id;
   if (notAdjacent) main.append(h("p", { class: "small", text: `You are comparing ${A.id} with ${B.id}, which spans ${list().findIndex((v) => v.id === A.id) - list().findIndex((v) => v.id === B.id)} versions. The changes listed below are those made in ${B.id} itself. The numbers cover the whole span.` }));
-  section(main, A ? `What changed in ${B.id}` : `What ${B.id} contains`, A ? diffLines(B.changes) : h("div", { class: "prose" }, h("ul", {}, B.changes.map(([, text]) => h("li", { text })))));
+  section(main, A ? `What changed in ${B.id}` : `Included in ${B.id}`, A ? diffLines(B.changes) : h("div", { class: "prose" }, h("ul", {}, B.changes.map(([, text]) => h("li", { text })))));
   if (B.fixed) {
     const tbl = h("table", {}, h("thead", {}, h("tr", {}, ["Error in the earlier version", "Evidence", "Fix"].map((t) => h("th", { scope: "col", text: t })))), h("tbody", {}, B.fixed.map((r) => h("tr", {}, r.map((c) => h("td", { text: c }))))));
     section(main, "Errors this version fixed", h("div", { class: "tv", style: "max-height:none" }, tbl));

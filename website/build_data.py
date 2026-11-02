@@ -16,8 +16,9 @@ Output (docs/data/):
   series.json          official time series for every area
   stats.json           tables behind the statistics page
   versions.json        the version history
+  methodology.json     held-out model scores and input importance, for the methodology page
 
-Also writes validation.json and sources.json to website/.cache/, for the methods page.
+Also writes validation.json and sources.json to website/.cache/, for the methodology page.
 """
 from __future__ import annotations
 import glob
@@ -699,6 +700,62 @@ def write_versions(d):
     dump("versions.json", dict(current=K.CURRENT, versions=out, diffs=diffs, log=K.build_log(RAW, ROOT)))
 
 
+def pair_share(o, col):
+    """How often a prediction orders two barangays of one municipality the same way the survey does."""
+    right = total = 0
+    for _, g in o[o.groupby("city_psgc").ydev.transform("size") >= 5].groupby("city_psgc"):
+        i, j = np.triu_indices(len(g), 1)
+        a, b = g.ydev.to_numpy()[i] - g.ydev.to_numpy()[j], g[col].to_numpy()[i] - g[col].to_numpy()[j]
+        keep = a != 0
+        right += int((np.sign(a[keep]) == np.sign(b[keep])).sum())
+        total += int(keep.sum())
+    return right / total
+
+
+IMPORTANCE_LABELS = {"Buildings and settlement form": "Buildings and settlement", "AlphaEarth satellite embeddings": "AlphaEarth embeddings"}
+
+
+def write_methodology(e):
+    """Every score here comes from data the model did not see in training."""
+    st = pd.read_csv(PROCESSED / "pattern_stats.csv", index_col=0).iloc[:, 0]
+    o = pd.read_csv(PROCESSED / "pattern_oof.csv", dtype={"bgy_pcode": str, "city_psgc": str})
+    cb = pd.read_csv(PROCESSED / "cbms_barangay.csv")
+    pc = pd.read_csv(PROCESSED / "disagg_comparison.csv")
+    pa, pu = pc[pc.subset == "all CBMS"].set_index("model"), pc[pc.subset == "cities only"].set_index("model")
+    ic = pd.read_csv(PROCESSED / "income_model_comparison.csv").set_index("model")
+    ti = pd.read_csv(PROCESSED / "income_training_v2.csv")
+    imp = pd.read_csv(PROCESSED / "feature_importance.csv")
+    cov = e[e.city_psgc.isin(set(o.city_psgc))]
+    mk = e[e.city_name == "City of Makati"].sort_values("income_k_2025", ascending=False).reset_index(drop=True)
+    poverty_row = lambda label, key: dict(label=label, value=clean(pa.at[key, "rho_within"], 3), r2=clean(pa.at[key, "r2_within"], 3), cities=clean(pu.at[key, "rho_within"], 3))
+    income_row = lambda label, key: dict(label=label, value=clean(ic.at[key, "r2_log"], 3), error=clean(ic.at[key, "mae_pct"], 1), ncr=clean(ic.at[key, "ncr_rho_2025"], 2))
+    importance = lambda model: [dict(label=IMPORTANCE_LABELS.get(r.group, r.group), value=clean(r.drop, 3), score=clean(r.score, 3), inputs=int(r.n_inputs))
+                                for r in imp[(imp.model == model) & (imp.group != "All inputs intact")].sort_values("drop", ascending=False).itertuples()]
+    dump("methodology.json", dict(
+        poverty=dict(rho=clean(st["rho_within"], 3), r2=clean(st["r2_within"], 3), pair=clean(pair_share(o, "pred") * 100, 1), share_positive=clean(st["share_positive"] * 100, 1),
+                     rho_cities=clean(st["rho_within_cities"], 3), rho_2025=clean(st["rho_within_2025"], 3), coverage=clean(st["coverage_90_heldout"] * 100, 1),
+                     cross_rho=clean(st["cross_rho"], 2), cross_provinces=int(st["cross_provinces"]), cross_n=int(st["cross_n"]), n=int(st["n_cbms"]), munis=int(st["n_munis"]), reports=int(o.group.nunique()),
+                     lights=clean(pa.at["nightlights alone (reversed)", "rho_within"], 3), lights_cities=clean(pu.at["nightlights alone (reversed)", "rho_within"], 3),
+                     municipal=clean(pa.at["A municipal-trained (v2 features)", "rho_within"], 3)),
+        income=dict(r2=clean(st["income_r2"], 3), error=clean(st["income_mape"] * 100, 1), gap_corr=clean(st["income_gap_corr"], 2), gap_ratio=clean(st["income_gap_mae"] / st["income_gap_naive_mae"], 2),
+                    gap_cities=int(st["income_gap_cities"]), rows=len(ti), poverty_alone=clean(ic.at["poverty only, Ridge", "r2_log"], 3), boost=clean(ic.at["poverty + all, HGB", "r2_log"], 3), ridge=clean(ic.at["poverty + all, Ridge", "r2_log"], 3),
+                    ncr_ridge=clean(ic.at["poverty + all, Ridge", "ncr_rho_2025"], 2), ncr_boost=clean(ic.at["poverty + all, HGB", "ncr_rho_2025"], 2)),
+        coverage=dict(people=clean(cov.population_2024.sum() / e.population_2024.sum() * 100, 1), regions=int(cov.reg_name.nunique()), regions_total=int(e.reg_name.nunique()),
+                      early=clean((cb.y0 <= 2008).mean() * 100, 1), year_min=int(cb.y0.min()), year_max=int(cb.y0.max())),
+        forbes=dict(rank=int(mk.index[mk.bgy_name == "Forbes Park"][0]) + 1, of=len(mk)),
+        income_models=[dict(label="Ridge + boosting (used)", value=clean(st["income_r2"], 3), error=clean(st["income_mape"] * 100, 1), used=True),
+                       income_row("Gradient boosting", "poverty + all, HGB"), income_row("Extremely randomized trees", "poverty + all, ExtraTrees"), income_row("Ridge regression", "poverty + all, Ridge"),
+                       income_row("Poverty rate alone", "poverty only, Ridge"), income_row("Satellite and census alone", "all features, Ridge")],
+        poverty_models=[dict(label="Gradient boosting (used)", value=clean(st["rho_within"], 3), r2=clean(st["r2_within"], 3), cities=clean(st["rho_within_cities"], 3), used=True),
+                        poverty_row("Ridge regression", "B barangay-trained Ridge"), poverty_row("Extremely randomized trees", "B barangay-trained ExtraTrees"),
+                        dict(label="Nighttime lights alone", value=clean(pa.at["nightlights alone (reversed)", "rho_within"], 3), cities=clean(pu.at["nightlights alone (reversed)", "rho_within"], 3)),
+                        poverty_row("Trained on municipal data", "A municipal-trained (v2 features)"),
+                        dict(label="Population density alone", value=clean(pa.at["density alone (reversed)", "rho_within"], 3), cities=clean(pu.at["density alone (reversed)", "rho_within"], 3)),
+                        dict(label="Relative Wealth Index", value=clean(pa.at["Meta RWI (reversed)", "rho_within"], 3), cities=clean(pu.at["Meta RWI (reversed)", "rho_within"], 3))],
+        importance=dict(income=importance("income"), poverty=importance("poverty")),
+    ))
+
+
 def write_sources():
     rows = []
     for g in K.SOURCE_GROUPS:
@@ -727,6 +784,7 @@ def main():
     meta = write_meta(d, e, items, reg_rows)
     logs = write_validation(d)
     write_versions(d)
+    write_methodology(e)
     write_sources()
     print({k: meta[k] for k in ("poverty", "poverty_lo", "poverty_hi", "poor_official_m", "income", "gini", "line_family5_month", "poverty_families")})
     print("smoothing:", logs["smoothing"])

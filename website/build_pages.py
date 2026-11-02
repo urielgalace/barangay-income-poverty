@@ -23,15 +23,15 @@ DATA = DOCS / "data"
 STATIC = ROOT / "website" / "static"
 CACHE = ROOT / "website" / ".cache"
 CODE_PUBLIC = False
-NAV = [("map", "Map"), ("trends", "Trends"), ("statistics", "Statistics"), ("methods", "Methods"), ("versions", "Versions"), ("about", "About")]
+NAV = [("map", "Map"), ("trends", "Trends"), ("statistics", "Statistics"), ("methodology", "Methodology"), ("versions", "Versions"), ("about", "About")]
 PAGES = {
     "index": ("Barangay Income and Poverty Atlas", "Income and poverty estimates for all 42,010 barangays in the Philippines, based on official data from the Philippine Statistics Authority, satellite imagery and machine learning."),
     "map": ("Map", "Interactive map of household income and poverty in every Philippine barangay, city and municipality, with margins of error."),
     "trends": ("Trends", "Official household income, poverty, poverty line and inequality series from 2018 to 2025 for any Philippine region, province, city or municipality."),
     "statistics": ("Statistics", "Descriptive statistics on household income and poverty in the Philippines in 2025: regions, distribution, concentration, urban and rural, and full tables."),
-    "methods": ("Methods", "How the barangay income and poverty dataset was built, retraced step by step, with every data source and checksum."),
+    "methodology": ("Methodology", "How the barangay income and poverty estimates are made: the machine learning models, how they were tested, and every data source."),
     "versions": ("Versions", "The current version of the dataset and the data behind it. Future versions will be listed here."),
-    "about": ("About", "About the Barangay Income and Poverty Atlas: common questions, how to report a problem, credits and disclosures."),
+    "about": ("About", "About the Barangay Income and Poverty Atlas: common questions, how to report a problem, and credits."),
     "404": ("Page not found", "This page does not exist."),
 }
 
@@ -98,7 +98,7 @@ def share_image(meta):
 def main():
     (DOCS / "assets" / "js").mkdir(parents=True, exist_ok=True)
     h = hashlib.sha256()
-    for f in sorted(STATIC.rglob("*")) + [DATA / "meta.json", DATA / "versions.json"]:
+    for f in sorted(STATIC.rglob("*")) + [DATA / "meta.json", DATA / "versions.json", DATA / "methodology.json"]:
         if f.is_file():
             h.update(f.read_bytes())
     build = h.hexdigest()[:10]
@@ -111,12 +111,13 @@ def main():
     val = json.load(open(CACHE / "validation.json"))
     sources = json.load(open(CACHE / "sources.json"))
     n_versions = len(json.load(open(DATA / "versions.json"))["versions"])
+    method = json.load(open(DATA / "methodology.json"))
 
     env = Environment(loader=FileSystemLoader(ROOT / "website" / "templates"), autoescape=True, undefined=StrictUndefined, trim_blocks=False, lstrip_blocks=False)
     env.filters["num"] = lambda v: f"{int(round(float(v))):,}"
     env.filters["bytes"] = lambda v: f"{v / 1e6:.1f} MB" if v >= 1e6 else f"{v / 1e3:.0f} KB"
     env.filters["longdate"] = lambda s: datetime.strptime(s, "%Y-%m-%d").strftime("%-d %B %Y")
-    common = dict(meta=meta, val=val, nav=NAV, site=K.SITE, repo=K.REPO, build=build, sources=sources, satellite=K.SATELLITE, code_public=CODE_PUBLIC, n_versions=n_versions)
+    common = dict(meta=meta, val=val, nav=NAV, site=K.SITE, repo=K.REPO, build=build, sources=sources, satellite=K.SATELLITE, code_public=CODE_PUBLIC, n_versions=n_versions, method=method)
     for page, (title, desc) in PAGES.items():
         html = env.get_template(f"{page}.html.j2").render(page=page, page_title=title, description=desc, path="" if page == "index" else f"{page}.html", **common)
         (DOCS / f"{page}.html").write_text(html)
