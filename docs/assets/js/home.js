@@ -1,9 +1,9 @@
 // Home page: the light SVG map, the national trend and the regional picture.
-import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox } from "./lib.js?b=b0a49ea52e";
-import { lineChart, barsH } from "./charts.js?b=b0a49ea52e";
-import { RAMPS, colorOf } from "./ramps.js?b=b0a49ea52e";
-import { searchPlaces, placeSub, placeLink } from "./places.js?b=b0a49ea52e";
-import { suggestInto } from "./locate.js?b=b0a49ea52e";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox } from "./lib.js?b=4f78ad799d";
+import { lineChart, barsH } from "./charts.js?b=4f78ad799d";
+import { RAMPS, colorOf } from "./ramps.js?b=4f78ad799d";
+import { searchPlaces, placeSub, placeLink } from "./places.js?b=4f78ad799d";
+import { suggestInto } from "./locate.js?b=4f78ad799d";
 
 async function drawMap() {
   const [geo, lg] = await Promise.all([getJSON("geo/home.json"), getJSON("lgus.json")]);

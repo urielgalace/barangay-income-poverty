@@ -1,6 +1,6 @@
 // Descriptive statistics for 2025: regions, income, distribution, concentration, places, sortable tables.
-import { getJSON, objects, fmt, h, figure, segmented } from "./lib.js?b=b0a49ea52e";
-import { barsH, dumbbell, columns, stackedH, lineChart, scatter } from "./charts.js?b=b0a49ea52e";
+import { getJSON, objects, fmt, h, figure, segmented } from "./lib.js?b=4f78ad799d";
+import { barsH, dumbbell, columns, stackedH, lineChart, scatter } from "./charts.js?b=4f78ad799d";
 
 const pctF = (v) => `${v.toFixed(1)}%`;
 
@@ -106,7 +106,7 @@ async function boot() {
   const ur = R.slice().sort((a, b) => b.p_rural - a.p_rural);
   figure(document.getElementById("ur-fig"), {
     title: "Rural and urban poverty within each region",
-    sub: "Estimates are based on barangay-level data, with urban and rural classifications drawn from the 2024 census.",
+    sub: "Based on barangay-level estimates, with urban and rural classifications drawn from the 2024 census.",
     legend: [{ cls: "dot c-income", label: "Urban barangays" }, { cls: "dot c-poverty", label: "Rural barangays" }],
     draw: (b, w) => dumbbell(b, w, { rows: ur.map((r) => ({ label: r.short, a: r.p_urban, b: r.p_rural })), format: (v) => (v == null ? "n/a" : pctF(v)), xFormat: (v) => `${v}%`, aLabel: "Urban", bLabel: "Rural", aColor: "income" }),
     table: () => ({ headers: ["Region", "Urban %", "Rural %", "Share of people in urban barangays %"], numeric: [0, 1, 1, 1], rows: ur.map((r) => [r.name, r.p_urban, r.p_rural, r.urban_share]) }),
