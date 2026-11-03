@@ -204,9 +204,6 @@ def write_chunks(d):
             "ps": [clean(v, 2) for v in s.poverty_rate_strict_official],
             "i": [clean(monthly(v), 0) for v in s.income_k_2025], "il": [clean(monthly(v), 0) for v in s.income_pi_lo], "ih": [clean(monthly(v), 0) for v in s.income_pi_hi],
             "h": [clean(v) if pd.notna(v) else None for v in s.population_2024], "f": [clean(v) if pd.notna(v) else None for v in s.households_2024],
-            # income set by hand for exclusive villages, with the model's own estimate kept for the record
-            "hc": [1 if v is True else None for v in s.income_set_by_hand],
-            "io": [clean(monthly(m), 0) if v is True else None for v, m in zip(s.income_set_by_hand, s.income_model_k_2025)],
             "a": [clean(v, 2) for v in s.area_km2],
             "x": [clean(v, 4) for v in s.lon], "y": [clean(v, 4) for v in s.lat],
         }

@@ -1,9 +1,9 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
-import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=4de91fd819";
-import { barsH } from "./charts.js?b=4de91fd819";
-import { RAMPS, colorOf } from "./ramps.js?b=4de91fd819";
-import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=4de91fd819";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=22e06ba8c1";
+import { barsH } from "./charts.js?b=22e06ba8c1";
+import { RAMPS, colorOf } from "./ramps.js?b=22e06ba8c1";
+import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=22e06ba8c1";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];
@@ -87,7 +87,7 @@ async function boot() {
     const base = { name, short: it.name, reg: l.reg, parent: l.parent, ref: refName(d, l), d, lgu: l, key: `lgu:${l.id}`, bgyId: it.id };
     if (j < 0 || t.i[j] == null) return { ...base, noData: true };
     const k = scaled(t.i[j], t.h[j] / t.f[j], d);
-    return { ...base, k, kLo: t.il[j] != null ? k * t.il[j] / t.i[j] : null, kHi: t.ih[j] != null ? k * t.ih[j] / t.i[j] : null, hand: t.hc ? t.hc[j] === 1 : false };
+    return { ...base, k, kLo: t.il[j] != null ? k * t.il[j] / t.i[j] : null, kHi: t.ih[j] != null ? k * t.ih[j] / t.i[j] : null };
   }
 
   function wageFor(p) {
@@ -128,7 +128,7 @@ async function boot() {
         });
       }
       return { title: `Your percentile in each barangay of ${cityFirst(l.name)}`, word: "barangays", one: "barangay", where: cityFirst(l.name), units,
-        note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These rankings should therefore be interpreted as approximate estimates. Select a barangay on the map to use it as your location.` };
+        note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These rankings should therefore be interpreted as rough estimates. Select a barangay on the map to use it as your location.` };
     }
     const [geo, lg] = await Promise.all([getJSON("geo/lgu.json"), getJSON("lgus.json")]);
     const byId = new Map(objects(lg).map((l) => [l.id, l]));
@@ -200,6 +200,43 @@ async function boot() {
     return svg;
   }
 
+  // the two nearest places at the chosen place's own level: barangays of the same city or municipality, or the nearest
+  // cities and municipalities, provinces or regions, by the distance between their centre points
+  let peers = null;
+  const nearest = (here, list, entry) => {
+    const kx = Math.cos((here.lat * Math.PI) / 180);
+    return list.filter((x) => x.lon != null && x.lat != null).map((x) => [((x.lon - here.lon) * kx) ** 2 + (x.lat - here.lat) ** 2, x])
+      .sort((x, y) => x[0] - y[0]).slice(0, 2).map((x) => entry(x[1]));
+  };
+  async function nearestPeers(p) {
+    if (p.bgyId) {
+      const { bgys } = await loadPlaces();
+      const pts = new Map(bgys.filter((b) => b.lgu.id === p.lgu.id).map((b) => [b.id, b]));
+      const here = pts.get(p.bgyId);
+      const others = area.units.filter((u) => u.id !== p.bgyId && u.k != null && pts.has(u.id)).map((u) => ({ lon: pts.get(u.id).lon, lat: pts.get(u.id).lat, u }));
+      return { word: "barangays", one: "barangay", near: here ? nearest(here, others, (x) => ({ name: x.u.name, d: x.u.d, k: x.u.k })) : [] };
+    }
+    if (p.lgu) {
+      const others = objects(await getJSON("lgus.json")).filter((l) => l.id !== p.lgu.id && l.i != null);
+      return { word: "cities and municipalities", one: "city or municipality", near: nearest(p.lgu, others, (l) => {
+        const d = C.dist[C.lgu[l.id]];
+        return { name: cityFirst(l.name), d, k: d.id === l.id ? 1 : scaled(l.i, l.pop / l.hh, d) };
+      }) };
+    }
+    if (p.region) {
+      const here = regions.find((r) => r.short === p.region);
+      return { word: "regions", one: "region", near: nearest(here, regions.filter((r) => r.short !== p.region), (r) => ({ name: regionLabel(r.short), d: C.dist[C.reg[r.short]], k: 1 })) };
+    }
+    // NCR's districts are compared with each other, provinces with provinces
+    const here = provinces.find((x) => x.id === p.parent);
+    const district = here?.level === "district";
+    const others = provinces.filter((x) => x.id !== p.parent && !/residual/.test(x.name) && (x.level === "district") === district);
+    return { word: district ? "districts" : "provinces", one: district ? "district" : "province", near: here ? nearest(here, others, (x) => {
+      const d = C.dist[C.prov[x.id]];
+      return { name: the(provName(x)), d, k: d.id === x.id ? 1 : scaled(x.i, x.pop / x.hh, d) };
+    }) : [] };
+  }
+
   async function paintArea(adjusted) {
     const sec = $("r-area");
     const p = place;
@@ -231,13 +268,26 @@ async function boot() {
     const n = ranked.length;
     const above = ranked.filter((u) => Math.round(u.v) > 99).length;
     const below = ranked.filter((u) => Math.round(u.v) < 1).length;
-    const lead = `After adjusting for household size, your income in ${area.where} would place you`;
-    const first = !n ? "There are no income estimates for this area."
-      : above === n ? `With the same income, adjusted for household size, you would be above the 99th percentile in every one of the ${area.word} in ${area.where}.`
-        : below === n ? `With the same income, adjusted for household size, you would be below the 1st percentile in every one of the ${area.word} in ${area.where}.`
-          : n === 1 ? `${lead} ${placeAt(ranked[0].v)} in ${cityFirst(ranked[0].name)}, the only ${area.one} in ${area.where}.`
-            : `${lead} ${placeAt(ranked[0].v)} in ${cityFirst(ranked[0].name)} and ${phrase(ranked[n - 1].v)} in ${cityFirst(ranked[n - 1].name)}.`;
+    // the chosen place beside its two nearest neighbours at the same level
+    if (!peers || peers.for !== p) {
+      const found = await nearestPeers(p);
+      if (pid !== areaPaint || place !== p) return;
+      peers = { ...found, for: p };
+    }
+    const near = peers.near.map((x) => ({ ...x, v: shareBelow(adjusted / x.k, x.d) }));
+    const self = p.bgyId ? p.short : p.lgu ? cityFirst(p.lgu.name) : p.region ? regionLabel(p.region) : the(p.name);
+    const selfV = p.noData ? null : shareBelow(adjusted / p.k, p.d);
+    const lead = "After adjusting for household size, your income would place you";
+    const all = (test) => near.length === 2 && [selfV, ...near.map((x) => x.v)].every((v) => test(Math.round(v)));
+    const pair = near.length === 2 ? `${placeAt(near[0].v)} in ${near[0].name} and ${phrase(near[1].v)} in ${near[1].name}` : near.length ? `${placeAt(near[0].v)} in ${near[0].name}` : null;
+    const first = selfV == null
+      ? (pair ? `In the ${near.length === 2 ? `two nearest ${peers.word}` : `nearest ${peers.one}`} to ${self}, your income, adjusted for household size, would place you ${pair}.` : "There are no income estimates for this area.")
+      : all((r) => r > 99) ? `${lead} above the 99th percentile in ${self} and in the two nearest ${peers.word}, ${near[0].name} and ${near[1].name}.`
+        : all((r) => r < 1) ? `${lead} below the 1st percentile in ${self} and in the two nearest ${peers.word}, ${near[0].name} and ${near[1].name}.`
+          : `${lead} ${placeAt(selfV)} in ${self}.${pair ? ` In the ${near.length === 2 ? `two nearest ${peers.word}` : `nearest ${peers.one}`}, it would place you ${pair}.` : ""}`;
     para($("r-map-text"), first,
+      n > 1 && above === n ? `With the same income, adjusted for household size, you would be above the 99th percentile in every one of the ${area.word} in ${area.where}.` : null,
+      n > 1 && below === n ? `With the same income, adjusted for household size, you would be below the 1st percentile in every one of the ${area.word} in ${area.where}.` : null,
       above > 1 && above < n ? `It would place you above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(n)} ${area.word} in ${area.where}.` : null,
       below > 1 && below < n ? `It would place you below the 1st percentile in ${fmt.int(below)} of the ${fmt.int(n)} ${area.word} in ${area.where}.` : null,
       area.note);
@@ -308,7 +358,6 @@ async function boot() {
       lo != null ? `Given the margin of error of this barangay's estimate, your percentile there is likely between the ${pctLabel(lo).toLowerCase()} and the ${pctLabel(hi).toLowerCase()}.` : null,
       local && !place.own ? `The Family Income and Expenditure Survey (FIES) has no figures for ${the(place.short)} itself, so this applies the income spread of ${the(place.ref)} to the estimated average income of ${the(place.short)}.` : null,
       place?.noData ? `There is no income estimate for ${place.name}, because it had no recorded residents in the 2024 census.` : null,
-      place?.hand ? `Household income for ${place.short} is set by hand to the average income of the richest tenth of households in ${the(place.lgu.name)} (FIES 2025), because satellite data cannot capture the incomes of exclusive gated villages.` : null,
       `To reach the middle of the national distribution, ${house ? `a household of ${n}` : "a person living alone"} would need about ${fmt.peso(middle(nat))} per month.`
         + (local ? ` In ${the(place.name)}, the figure is about ${fmt.peso(middle(place.d, place.k))}.` : ""));
 
