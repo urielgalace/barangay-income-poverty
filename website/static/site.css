@@ -128,7 +128,7 @@ main { padding-bottom: 56px; }
 .seg button:hover { background: var(--accent-wash); color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
 .seg button:disabled { opacity: .4; cursor: not-allowed; background: none; }
-select, input[type="search"], input[type="text"], input[type="number"] { font: 400 var(--t-sm)/1.3 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-2); border-radius: 6px; padding: 8px 10px; max-width: 100%; }
+select, textarea, input[type="search"], input[type="text"], input[type="number"] { font: 400 var(--t-sm)/1.3 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-2); border-radius: 6px; padding: 8px 10px; max-width: 100%; }
 input[type="search"]::placeholder { color: var(--ink-3); }
 .btn { display: inline-flex; align-items: center; gap: 6px; font: 600 var(--t-sm)/1.2 var(--body); text-decoration: none; border-radius: 6px; padding: 10px 15px; border: 1px solid var(--ink); background: var(--ink); color: var(--on-ink); cursor: pointer; }
 .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--on-ink); }
@@ -383,3 +383,10 @@ details[open] > summary { margin-bottom: 10px; }
 .ladder tr[aria-current="true"] td { background: var(--accent-wash); font-weight: 700; }
 .you { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--ink); color: var(--on-ink); font-size: var(--t-xs); font-weight: 600; white-space: nowrap; }
 @media (max-width: 560px) { .ladder th, .ladder td { padding: 7px 6px; } .ladder .times { display: none; } }
+
+/* ---- report form ---- */
+.report-form { display: grid; gap: 18px; max-width: 640px; }
+.report-form .field { font-size: var(--t-sm); }
+.report-form .hint { font-size: var(--t-xs); color: var(--ink-3); }
+.report-form input, .report-form textarea { width: 100%; }
+textarea { line-height: 1.45; resize: vertical; }

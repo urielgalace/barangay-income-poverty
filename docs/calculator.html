@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-build="fe9574329e">
+<html lang="en" data-build="f2d0e5d55c">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/site.css?b=fe9574329e">
+<link rel="stylesheet" href="assets/site.css?b=f2d0e5d55c">
 <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
 
 </head>
@@ -86,15 +86,16 @@
       <summary>How this is calculated</summary>
       <div class="prose">
         <h3>Income percentile</h3>
-        <p>The <a href="https://psa.gov.ph/statistics/income-expenditure/fies">Family Income and Expenditure Survey</a> (FIES) 2025 publishes average household income for ten income groups in each region, province and highly urbanized city, but not individual records. In each area, an income curve (a Dagum distribution) is fitted to those averages, after dividing them by household size, and to the official poverty rate where there is one. Percentiles count people, ranked by the income per person of their households, so the poverty line sits close to PSA's poverty incidence of 9.7%.</p>
-        <p>FIES has no distribution of individual earnings. An individual income is therefore compared with income per person as it is, and a household income is divided by household size first. Someone who supports dependents will rank lower by entering their household income and size. Your income is first converted to 2025 prices using PSA's consumer price index, on the assumption that incomes have kept up with prices since then.</p>
-        <p>Cities, municipalities and barangays without their own FIES figures use the curve of their province or region, shifted to their estimated average income per person. This assumes that incomes are spread out in the same way, so these percentiles are rough. Barangay ranges reflect the margin of error of the barangay's estimate. Province figures leave out highly urbanized cities, as FIES does.</p>
-        <p>As a test, before the poverty rate was added to the fit, the curves placed each area's poverty line an average of 2.2 percentage points from its official poverty rate across 101 areas with official poverty rates (1.2 points for regions). Nationally, they gave 9.5% in 2025, against an official 9.7%. The same method reproduced each of PIDS's published class shares for 2018 to within 2.5 percentage points.</p>
+        <p>The <a href="https://psa.gov.ph/statistics/income-expenditure/fies">Family Income and Expenditure Survey</a> (FIES) 2025 publishes average household income for ten income groups in each region, province and highly urbanized city, ranked by income per person, but not individual records. FIES 2023 also reports how many households of each size there are and their average income. In each area, a model of household incomes and sizes is fitted to both, and to the official poverty rate where there is one.</p>
+        <p>Percentiles rank people by household income adjusted for household size with the square-root scale: income divided by the square root of the number of household members, which allows for the savings of sharing a home. An individual income is treated as the income of a one-person household. Your income is first converted to 2025 prices using PSA's consumer price index, on the assumption that incomes have kept up with prices since then.</p>
+        <p>Cities, municipalities and barangays without their own FIES figures use the model of their province or region, shifted to their estimated average household income, adjusted for size. This assumes that incomes are spread out in the same way, so these percentiles are rough. Barangay ranges reflect the margin of error of the barangay's estimate. Province figures leave out highly urbanized cities, as FIES does.</p>
+        <p>As a test, before the poverty rate was added to the fit, the models placed each area's poverty line an average of 2.6 percentage points from its official poverty rate across 101 areas with official poverty rates (1.8 points for regions). Nationally, they gave 10.6% in 2025, against an official 9.7%. The same method reproduced each of PIDS's published class shares for 2018 to within 1.3 percentage points. PSA publishes no figures ranked by size-adjusted income, so the square-root ranking itself cannot be checked against official data.</p>
         <h3>Income class</h3>
-        <p>The income classes come from the Philippine Institute for Development Studies (<a href="https://pidswebs.pids.gov.ph/CDN/PUBLICATIONS/pidsdps1820.pdf">Albert, Santos and Vizmanos, 2018</a>), which defines them by income per person as a multiple of the official poverty line. This calculator uses the 2025 national poverty line of ₱35,121 per person per year, updated to September 2026 prices using PSA's consumer price index, which rose 7.4%. That comes to ₱3,144 per person per month, or ₱15,720 for a family of five. Thresholds for a household are the thresholds per person multiplied by household size.</p>
+        <p>The income classes come from the Philippine Institute for Development Studies (<a href="https://pidswebs.pids.gov.ph/CDN/PUBLICATIONS/pidsdps1820.pdf">Albert, Santos and Vizmanos, 2018</a>), which defines them as multiples of the official poverty line. This calculator uses the 2025 national poverty line of ₱35,121 per person per year, updated to <span data-price="label">September 2026</span> prices using PSA's consumer price index, which rose <span data-price="pct">7.4</span>%. Prices update automatically each month when PSA publishes a new index.</p>
+        <p>For a family of five, the thresholds are exactly PIDS's: the poverty line is ₱<span data-price="line5">15,720</span> per month. PIDS applies its classes to income per person, which would make one person's poverty line a fifth of that. This calculator instead adjusts the thresholds to other household sizes with the square-root scale, so one person's poverty line is ₱<span data-price="line5">15,720</span> divided by the square root of 5, or ₱<span data-price="line1">7,030</span>. For households other than five, the classes therefore differ from PIDS's own.</p>
         <h3>Living wage</h3>
         <p>Living wage figures are the family living wage published by <a href="https://www.ibon.org/en/flw-natl-2608/">IBON Foundation</a> as of August 2026, nationally and <a href="https://www.ibon.org/en/flw-regl-2608/">by region</a>: what a family of five should receive to live decently. IBON bases them on data from the National Wages and Productivity Commission and PSA. Daily regional figures are converted to monthly figures using 261 paid days a year, which reproduces IBON's national monthly figures to within ₱8.</p>
-        <p>An individual income is compared with the full figure for a family of five. A household income is compared with that figure scaled in proportion to household size. IBON does not publish figures below the regional level, so cities, municipalities and barangays use their region's figure. Caraga uses the national figure, because the commission released none for it. In the Negros Island Region, which has no figure of its own, Negros Occidental uses the figure for Western Visayas, Negros Oriental and Siquijor use the figure for Central Visayas, and the region as a whole uses the national figure.</p>
+        <p>For other household sizes, IBON's figure is adjusted with the same square-root scale, so one person's living wage is the figure for a family of five divided by the square root of 5. IBON does not publish figures below the regional level, so cities, municipalities and barangays use their region's figure. Caraga uses the national figure, because the commission released none for it. In the Negros Island Region, which has no figure of its own, Negros Occidental uses the figure for Western Visayas, Negros Oriental and Siquijor use the figure for Central Visayas, and the region as a whole uses the national figure.</p>
       </div>
     </details>
   </section>
@@ -103,11 +104,11 @@
 </main>
 <footer class="site-foot">
   <div class="wrap foot-grid">
-    <p><a href="https://github.com/urielgalace/barangay-income-poverty">GitHub</a> · <a href="https://github.com/urielgalace/barangay-income-poverty/issues/new?template=data-problem.yml">Report a problem</a></p>
+    <p><a href="https://github.com/urielgalace/barangay-income-poverty">GitHub</a> · <a href="report.html">Report a problem</a></p>
     <div class="theme-switch" id="theme-switch"><span>Theme</span></div>
   </div>
 </footer>
-<script type="module">import { initTheme } from "./assets/js/lib.js?b=fe9574329e"; initTheme();</script>
-<script type="module" src="assets/js/calculator.js?b=fe9574329e"></script>
+<script type="module">import { initTheme } from "./assets/js/lib.js?b=f2d0e5d55c"; initTheme();</script>
+<script type="module" src="assets/js/calculator.js?b=f2d0e5d55c"></script>
 </body>
 </html>

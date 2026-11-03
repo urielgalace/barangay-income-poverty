@@ -1,0 +1,29 @@
+# Keeps the income calculator's prices current: checks PSA's consumer price index daily and publishes a new month when one appears.
+name: Update calculator prices
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the latest consumer price index
+        run: python3 .github/scripts/update_prices.py
+      - name: Publish a new month
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- docs/data/prices.json; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update calculator prices to $(python3 -c 'import json; print(json.load(open("docs/data/prices.json"))["label"])')" -- docs/data/prices.json
+          git push
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null

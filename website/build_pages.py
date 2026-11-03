@@ -31,6 +31,7 @@ PAGES = {
     "calculator": ("Income Percentile Calculator", "See where your income ranks in the Philippines and in your area, which income class you belong to, and how your income compares with the living wage."),
     "methodology": ("Methodology", "How the barangay income and poverty estimates are made: the machine learning models, how they were tested, and every data source."),
     "versions": ("Version History", "The current version of the dataset and the data behind it. Future versions will be listed here."),
+    "report": ("Report a Problem", "Report a wrong name, a misplaced barangay, a broken page or a mistake in the methodology."),
     "about": ("About", "About the Barangay Income and Poverty Atlas: common questions, how to report a problem, and credits."),
     "404": ("Page not found", "This page does not exist."),
 }
@@ -113,12 +114,16 @@ def main():
     n_versions = len(json.load(open(DATA / "versions.json"))["versions"])
     method = json.load(open(DATA / "methodology.json"))
     calc = json.load(open(DATA / "calculator.json"))
+    # the calculator's price month, which a scheduled GitHub Action keeps current; the page also reads it when it loads
+    prices = json.load(open(DATA / "prices.json"))
+    prices["line5"] = round(calc["line"] * prices["factor"]) * 5
+    prices["line1"] = round(prices["line5"] / 5 ** .5)
 
     env = Environment(loader=FileSystemLoader(ROOT / "website" / "templates"), autoescape=True, undefined=StrictUndefined, trim_blocks=False, lstrip_blocks=False)
     env.filters["num"] = lambda v: f"{int(round(float(v))):,}"
     env.filters["bytes"] = lambda v: f"{v / 1e6:.1f} MB" if v >= 1e6 else f"{v / 1e3:.0f} KB"
     env.filters["longdate"] = lambda s: datetime.strptime(s, "%Y-%m-%d").strftime("%-d %B %Y")
-    common = dict(meta=meta, val=val, nav=NAV, site=K.SITE, repo=K.REPO, build=build, sources=sources, satellite=K.SATELLITE, n_versions=n_versions, method=method, calc=calc)
+    common = dict(meta=meta, val=val, nav=NAV, site=K.SITE, repo=K.REPO, build=build, sources=sources, satellite=K.SATELLITE, n_versions=n_versions, method=method, calc=calc, prices=prices)
     for page, (title, desc) in PAGES.items():
         html = env.get_template(f"{page}.html.j2").render(page=page, page_title=title, description=desc, path="" if page == "index" else f"{page}.html", **common)
         (DOCS / f"{page}.html").write_text(html)

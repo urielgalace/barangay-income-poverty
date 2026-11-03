@@ -1,6 +1,6 @@
-// The search box's suggestion. With the visitor's permission, the browser's location is matched to a barangay here in
+// Place suggestions for the home page's search box and the report form. With the visitor's permission, the browser's location is matched to a barangay here in
 // the page: it is never sent anywhere, and the site only loads the map file for that province. Without it, a random one.
-import { getJSON, objects } from "./lib.js?b=fe9574329e";
+import { getJSON, objects } from "./lib.js?b=f2d0e5d55c";
 
 const MAX_ACCURACY_M = 1500;   // past this a barangay would be a guess, so suggest the city or municipality instead
 
@@ -47,10 +47,13 @@ function visitorCoords() {
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
+// a random barangay and its city or municipality
+export const randomPlace = async () => pick(await getJSON("suggest.json"));
+
 export async function randomHint() {
-  const [names, lg] = await Promise.all([getJSON("suggest.json"), getJSON("lgus.json")]);
+  const [[name], lg] = await Promise.all([randomPlace(), getJSON("lgus.json")]);
   const towns = objects(lg).map((l) => l.name).filter((n) => n.length <= 22);
-  return `Try ${pick(names)} or ${pick(towns)}`;
+  return `Try ${name} or ${pick(towns)}`;
 }
 
 export function hintFor(place) {
@@ -59,10 +62,10 @@ export function hintFor(place) {
 }
 
 // Shows a random suggestion at once, then replaces it if the visitor's own place can be found.
-export async function suggestInto(input) {
-  input.placeholder = await randomHint();
+export async function suggestInto(input, { random = randomHint, found = hintFor } = {}) {
+  input.placeholder = await random();
   const c = await visitorCoords();
   if (!c) return;
-  const hint = hintFor(await placeAt(c.longitude, c.latitude, c.accuracy));
+  const hint = found(await placeAt(c.longitude, c.latitude, c.accuracy));
   if (hint) input.placeholder = hint;
 }

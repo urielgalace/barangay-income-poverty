@@ -1,0 +1,17 @@
+{% extends "base.html.j2" %}
+{% block main %}
+<div class="wrap">
+  <div class="page-title">
+    <h1>Report a Problem</h1>
+    <p class="lede">Report incorrect names, misplaced barangays, broken pages, or methodological errors. You will finish the report on GitHub, which requires a free account.</p>
+  </div>
+  <form class="report-form" id="r-form" autocomplete="off" novalidate>
+    <div class="field combo"><label for="r-place">Place</label><span class="hint">The barangay, city or municipality, if this is about a place.</span><input type="search" id="r-place" maxlength="200"></div>
+    <div class="field"><label for="r-problem">What looks wrong?</label><span class="hint">Please say what the site shows and what you expected.</span><textarea id="r-problem" rows="5" maxlength="1500"></textarea></div>
+    <div class="field"><label for="r-source">How do you know?</label><span class="hint">A link or a source helps. Local knowledge is welcome too. Please do not include anyone's personal information.</span><textarea id="r-source" rows="3" maxlength="1000"></textarea></div>
+    <div class="field"><label for="r-page">Link to the page</label><input type="text" id="r-page" inputmode="url" maxlength="500"></div>
+    <div><a class="btn" id="r-go" data-base="https://github.com/{{ repo }}/issues/new" href="https://github.com/{{ repo }}/issues/new?template=data-problem.yml" target="_blank" rel="noopener">Continue on GitHub</a></div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="assets/js/report.js?b={{ build }}"></script>{% endblock %}

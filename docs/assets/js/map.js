@@ -1,12 +1,12 @@
 // The interactive map. Cities and municipalities load at once; barangays load province by province as you zoom in.
-import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=fe9574329e";
-import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=fe9574329e";
-import { searchPlaces, placeSub } from "./places.js?b=fe9574329e";
-import { lineChart } from "./charts.js?b=fe9574329e";
+import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=f2d0e5d55c";
+import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=f2d0e5d55c";
+import { searchPlaces, placeSub } from "./places.js?b=f2d0e5d55c";
+import { lineChart } from "./charts.js?b=f2d0e5d55c";
 
 const BGY_MIN_ZOOM = 8;
 const MAX_CHUNKS = 28;
-const ISSUE_URL = (repo, title) => `https://github.com/${repo}/issues/new?template=data-problem.yml&title=${encodeURIComponent(title)}`;
+const REPORT_URL = (place) => `report.html?place=${encodeURIComponent(place)}`;
 
 const state = { metric: "income", level: "barangay", local: false, localRamp: null, ver: null, from: null, sel: null };
 const store = {};              // source id -> { fc, byId }
@@ -443,7 +443,7 @@ async function renderDetail(sel) {
       if (p.m === "code_rename") box.append(h("p", { class: "d-note", text: "This barangay's name differs from the 2023 boundary layer. It was linked by its code." }));
       if (l?.name === "City of Taguig" || l?.name === "City of Makati") box.append(h("p", { class: "d-note", text: "The 2023 city figures behind Makati and Taguig still counted the EMBO barangays in Makati, so levels here are less certain." }));
     }
-    box.append(h("div", { class: "d-links" }, h("a", { href: ISSUE_URL(meta.repo, `Data problem: ${p.n}, ${l?.name || ""}`), target: "_blank", rel: "noopener", text: "Report a problem" }), l ? h("a", { href: `trends.html#a=m:${l.id}`, text: `${l.name} over time` }) : null));
+    box.append(h("div", { class: "d-links" }, h("a", { href: REPORT_URL(l ? `${p.n}, ${l.name}` : p.n), target: "_blank", rel: "noopener", text: "Report a problem" }), l ? h("a", { href: `trends.html#a=m:${l.id}`, text: `${l.name} over time` }) : null));
   } else if (sel.kind === "lgu") {
     const l = lguById.get(sel.id);
     const area = provById.get(l.parent);
@@ -459,7 +459,7 @@ async function renderDetail(sel) {
     const chartBox = h("div", {});
     box.append(chartBox);
     if (area) box.append(h("p", { class: "d-note", text: `Poverty level set by: ${area.id}, official ${area.official == null ? "n/a" : `${area.official}%`}. Municipal pattern: ${l.src}. City and municipal figures are moderate estimates.` }));
-    box.append(h("div", { class: "d-links" }, h("a", { href: `trends.html#a=m:${l.id}`, text: "Full trend" }), h("a", { href: ISSUE_URL(meta.repo, `Data problem: ${l.name}`), target: "_blank", rel: "noopener", text: "Report a problem" })));
+    box.append(h("div", { class: "d-links" }, h("a", { href: `trends.html#a=m:${l.id}`, text: "Full trend" }), h("a", { href: REPORT_URL(l.name), target: "_blank", rel: "noopener", text: "Report a problem" })));
     getJSON("series.json").then((sr) => {
       const q = sr[`m:${l.id}`];
       if (!q || !q.pov?.length) return;
