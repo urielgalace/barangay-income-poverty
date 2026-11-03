@@ -24,6 +24,7 @@ VERSIONS = [
             ("Added", "Population and household counts taken directly from the official 2024 census."),
             ("Added", "Barangay classifications based on the PSA’s geographic codes for the third quarter of 2026, mapped onto 2023 boundaries."),
             ("Added", "Estimates are excluded for 12 barangays with no recorded residents in the 2024 census and 21 geographic polygons that do not correspond to barangays, including forests and parks."),
+            ("Changed", "3 November 2026: household income for six exclusive gated villages in Metro Manila (Forbes Park, Dasmariñas and Urdaneta in Makati; New Alabang Village, which contains Ayala Alabang, in Muntinlupa; Wack-Wack Greenhills in Mandaluyong; and White Plains in Quezon City) is set by hand to the average income of the richest tenth of households in their city, from FIES 2025. The other barangays in these cities are scaled down so that each city’s average still matches the official figure."),
         ]),
 ]
 

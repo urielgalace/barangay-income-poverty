@@ -29,6 +29,11 @@ const ofWage = (v) => (v <= 100 ? `${fmt.int(v)}%` : `${v < 1000 ? (v / 100).toF
 // the map's percentile bands, in the site's income blues: dim for low, bright for high
 const BANDS = { breaks: [25, 50, 75, 90, 95, 99], colors: RAMPS.income.colors };
 const BAND_TICKS = ["Below 25th", "25th", "50th", "75th", "90th", "95th", "Above 99th"];
+const cityFirst = (name) => name.replace(/^City of (.+)$/, "$1 City");
+const placeAt = (v) => {
+  const r = Math.round(v);
+  return r > 99 ? "above the 99th percentile" : r < 1 ? "below the 1st percentile" : `at the ${ordinal(r)} percentile`;
+};
 const phrase = (v) => {
   const r = Math.round(v);
   return r > 99 ? "above the 99th percentile" : r < 1 ? "below the 1st percentile" : `the ${ordinal(r)} percentile`;
@@ -82,7 +87,7 @@ async function boot() {
     const base = { name, short: it.name, reg: l.reg, parent: l.parent, ref: refName(d, l), d, lgu: l, key: `lgu:${l.id}`, bgyId: it.id };
     if (j < 0 || t.i[j] == null) return { ...base, noData: true };
     const k = scaled(t.i[j], t.h[j] / t.f[j], d);
-    return { ...base, k, kLo: t.il[j] != null ? k * t.il[j] / t.i[j] : null, kHi: t.ih[j] != null ? k * t.ih[j] / t.i[j] : null };
+    return { ...base, k, kLo: t.il[j] != null ? k * t.il[j] / t.i[j] : null, kHi: t.ih[j] != null ? k * t.ih[j] / t.i[j] : null, hand: t.hc ? t.hc[j] === 1 : false };
   }
 
   function wageFor(p) {
@@ -122,8 +127,8 @@ async function boot() {
             pick: v.t[i] !== 3 ? { kind: "bgy", name: v.n[i], lgu: l, chunk, id } : null });
         });
       }
-      return { title: `Your percentile in each barangay of ${the(l.name)}`, word: "barangays", units,
-        note: `Barangay figures apply the income spread of ${the(refName(d, l))} to each barangay's estimated average income, adjusted for household size, so they should be interpreted as estimates. Select a barangay on the map to use it as your location.` };
+      return { title: `Your percentile in each barangay of ${cityFirst(l.name)}`, word: "barangays", where: cityFirst(l.name), units,
+        note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These rankings should therefore be interpreted as approximate estimates. Select a barangay on the map to use it as your location.` };
     }
     const [geo, lg] = await Promise.all([getJSON("geo/lgu.json"), getJSON("lgus.json")]);
     const byId = new Map(objects(lg).map((l) => [l.id, l]));
@@ -135,8 +140,8 @@ async function boot() {
       units.push({ id, name: l.name, geom: geo.geom[i], d, k: l.i != null ? (d.id === l.id ? 1 : scaled(l.i, l.pop / l.hh, d)) : null,
         pick: { kind: "lgu", name: l.name, lgu: l, id: l.id } });
     });
-    return { title: `Your percentile in each city and municipality of ${p.region ? regionLabel(p.region) : the(p.name)}`, word: "cities and municipalities", units,
-      note: "Most cities and municipalities have no survey figures of their own, so these use the income spread of their province or region, shifted to the place's estimated average income. These percentiles should be interpreted as estimates. Select a place on the map to use it as your location." };
+    return { title: `Your percentile in each city and municipality of ${p.region ? regionLabel(p.region) : the(p.name)}`, word: "cities and municipalities", where: p.region ? regionLabel(p.region) : the(p.name), units,
+      note: "Percentiles for most cities and municipalities are estimated using the income distribution of their province or region, adjusted to each place’s estimated average household income and household size. These rankings should therefore be interpreted as approximate estimates. Select a place on the map to use it as your location." };
   }
 
   // outlines are stored as integer degrees × 10,000, each point after the first as a step from the one before
@@ -219,14 +224,14 @@ async function boot() {
     const n = ranked.length;
     const above = ranked.filter((u) => Math.round(u.v) > 99).length;
     const below = ranked.filter((u) => Math.round(u.v) < 1).length;
-    const lead = "With the same income, adjusted for household size,";
+    const lead = `After adjusting for household size, your income in ${area.where} would place you`;
     const first = !n ? "There are no income estimates for this area."
-      : above === n ? `${lead} you would be above the 99th percentile in every one of these ${area.word}.`
-        : below === n ? `${lead} you would be below the 1st percentile in every one of these ${area.word}.`
-          : `${lead} you would rank highest among the residents of ${the(ranked[0].name)} (${phrase(ranked[0].v)}) and lowest in ${the(ranked[n - 1].name)} (${phrase(ranked[n - 1].v)}).`;
+      : above === n ? `${lead} above the 99th percentile in every one of these ${area.word}.`
+        : below === n ? `${lead} below the 1st percentile in every one of these ${area.word}.`
+          : `${lead} ${placeAt(ranked[0].v)} in ${cityFirst(ranked[0].name)} and ${phrase(ranked[n - 1].v)} in ${cityFirst(ranked[n - 1].name)}.`;
     para($("r-map-text"), first,
-      above > 1 && above < n ? `You would be above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(n)} ${area.word}.` : null,
-      below > 1 && below < n ? `You would be below the 1st percentile in ${fmt.int(below)} of them.` : null,
+      above > 1 && above < n ? `It would place you above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(n)} ${area.word}.` : null,
+      below > 1 && below < n ? `It would place you below the 1st percentile in ${fmt.int(below)} of them.` : null,
       area.note);
     const table = () => $("r-map-table").replaceChildren(
       h("thead", {}, h("tr", {}, h("th", { scope: "col", text: area.word === "barangays" ? "Barangay" : "City or municipality" }), h("th", { scope: "col", class: "n", text: "Your percentile" }))),
@@ -295,6 +300,7 @@ async function boot() {
       lo != null ? `Given the margin of error of this barangay's estimate, your percentile there is likely between the ${pctLabel(lo).toLowerCase()} and the ${pctLabel(hi).toLowerCase()}.` : null,
       local && !place.own ? `The Family Income and Expenditure Survey (FIES) has no figures for ${the(place.short)} itself, so this applies the income spread of ${the(place.ref)} to the estimated average income of ${the(place.short)}.` : null,
       place?.noData ? `There is no income estimate for ${place.name}, because it had no recorded residents in the 2024 census.` : null,
+      place?.hand ? `Household income for ${place.short} is set by hand to the average income of the richest tenth of households in ${the(place.lgu.name)} (FIES 2025), because satellite data cannot capture the incomes of exclusive gated villages.` : null,
       `To reach the middle of the national distribution, ${house ? `a household of ${n}` : "a person living alone"} would need about ${fmt.peso(middle(nat))} per month.`
         + (local ? ` In ${the(place.name)}, the figure is about ${fmt.peso(middle(place.d, place.k))}.` : ""));
 
