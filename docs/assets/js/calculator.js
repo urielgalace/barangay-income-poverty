@@ -1,8 +1,9 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
-import { getJSON, objects, fmt, h, figure, segmented, combobox, rankMatches } from "./lib.js?b=3380a9cdd9";
-import { barsH } from "./charts.js?b=3380a9cdd9";
-import { searchPlaces, placeSub } from "./places.js?b=3380a9cdd9";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=bfc09d4210";
+import { barsH } from "./charts.js?b=bfc09d4210";
+import { RAMPS, colorOf } from "./ramps.js?b=bfc09d4210";
+import { searchPlaces, placeSub } from "./places.js?b=bfc09d4210";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];
@@ -25,6 +26,13 @@ const the = (name) => (/^(City of|\d)/.test(name) ? `the ${name}` : name);
 const times = (m) => (m < 100 ? m.toFixed(1) : fmt.int(m));
 // a percentage of the living wage, or a multiple of it once it is above 100%
 const ofWage = (v) => (v <= 100 ? `${fmt.int(v)}%` : `${v < 1000 ? (v / 100).toFixed(1) : fmt.int(v / 100)} times`);
+// the map's percentile bands, in the site's income blues: dim for low, bright for high
+const BANDS = { breaks: [25, 50, 75, 90, 95, 99], colors: RAMPS.income.colors };
+const BAND_TICKS = ["Below 25th", "25th", "50th", "75th", "90th", "95th", "Above 99th"];
+const phrase = (v) => {
+  const r = Math.round(v);
+  return r > 99 ? "above the 99th percentile" : r < 1 ? "below the 1st percentile" : `the ${ordinal(r)} percentile`;
+};
 const para = (box, ...texts) => box.replaceChildren(...texts.filter(Boolean).map((t) => (t instanceof Node ? t : h("p", { text: t }))));
 
 async function boot() {
@@ -66,12 +74,12 @@ async function boot() {
     const d = C.dist[C.lgu[l.id]];
     if (it.kind === "lgu") {
       const own = d.id === l.id;
-      return { name: l.name, short: l.name, d, k: own ? 1 : scaled(l.i, l.pop / l.hh, d), own, ref: refName(d, l), reg: l.reg, parent: l.parent };
+      return { name: l.name, short: l.name, d, k: own ? 1 : scaled(l.i, l.pop / l.hh, d), own, ref: refName(d, l), reg: l.reg, parent: l.parent, town: l.id };
     }
     const t = await getJSON(`bgy/${it.chunk}.json`);
     const j = t.ids.indexOf(it.id);
     const name = `${it.name}, ${l.name}`;
-    const base = { name, short: it.name, reg: l.reg, parent: l.parent, ref: refName(d, l), d };
+    const base = { name, short: it.name, reg: l.reg, parent: l.parent, ref: refName(d, l), d, town: l.id };
     if (j < 0 || t.i[j] == null) return { ...base, noData: true };
     const k = scaled(t.i[j], t.h[j] / t.f[j], d);
     return { ...base, k, kLo: t.il[j] != null ? k * t.il[j] / t.i[j] : null, kHi: t.ih[j] != null ? k * t.ih[j] / t.i[j] : null };
@@ -89,6 +97,58 @@ async function boot() {
     const w = C.wage[p.reg];
     if (w.flw == null) return { ...national, mw: w.mw, mwArea: w.label, note: `IBON Foundation has no living wage figure for ${w.label}, because the National Wages and Productivity Commission did not release one, so this uses the national figure.` };
     return { ...w, area: w.label, mwArea: w.label, note: "" };
+  }
+
+  // ---- the map: your percentile among the residents of each city and municipality, drawn once and recoloured
+  let mapReady;
+  const loadMap = () => (mapReady ||= Promise.all([getJSON("geo/home.json"), getJSON("lgus.json")]).then(([geo, lg]) => {
+    const byId = new Map(objects(lg).map((l) => [l.id, l]));
+    const svg = s("svg", { viewBox: `0 0 ${geo.w} ${geo.h}`, role: "img", "aria-label": "Map of your income percentile in each city and municipality. The table beside it lists the same figures." });
+    const shapes = geo.ids.map((id, i) => {
+      const l = byId.get(id);
+      const d = l ? C.dist[C.lgu[l.id]] : null;
+      const shape = { p: s("path", { d: geo.d[i] }), l, d, k: d ? (d.id === l.id ? 1 : scaled(l.i, l.pop / l.hh, d)) : null, v: null };
+      shape.p.addEventListener("pointermove", (e) => {
+        if (shape.v != null) tip.show(e.clientX, e.clientY, [l.name, l.prov || l.reg].filter(Boolean).join(", "), [{ value: pctLabel(shape.v), label: "percentile" }]);
+      });
+      shape.p.addEventListener("pointerleave", () => tip.hide());
+      if (l) shape.p.addEventListener("click", () => choose({ kind: "lgu", name: l.name, lgu: l, id: l.id }));
+      svg.append(shape.p);
+      return shape;
+    });
+    $("r-map").replaceChildren(svg);
+    $("r-scale").replaceChildren(...BANDS.colors.map((c, i) => h("div", { class: "sw" }, h("i", { style: `background:${c}` }), h("span", { text: BAND_TICKS[i] }))));
+    return { svg, shapes };
+  }));
+
+  async function paintMap(adjusted, here) {
+    const { svg, shapes } = await loadMap();
+    const ranked = [];
+    for (const sh of shapes) {
+      sh.v = sh.d && sh.l.i != null ? shareBelow(adjusted / sh.k, sh.d) : null;
+      sh.p.setAttribute("fill", colorOf(BANDS, sh.v));
+      sh.p.classList.toggle("here", sh.l != null && sh.l.id === here);
+      if (sh.v != null) ranked.push(sh);
+    }
+    const mark = shapes.find((sh) => sh.l && sh.l.id === here);
+    if (mark) svg.append(mark.p);     // drawn last, so its outline shows on every side
+    ranked.sort((a, b) => b.v - a.v);
+    const where = (sh) => [sh.l.name, sh.l.prov || sh.l.reg].filter(Boolean).join(", ");
+    const above = ranked.filter((sh) => Math.round(sh.v) > 99).length;
+    const below = ranked.filter((sh) => Math.round(sh.v) < 1).length;
+    const n = ranked.length;
+    const first = above === n ? `With the same income, adjusted for household size, you would be above the 99th percentile in every city and municipality.`
+      : below === n ? `With the same income, adjusted for household size, you would be below the 1st percentile in every city and municipality.`
+        : `With the same income, adjusted for household size, you would rank highest among the residents of ${the(where(ranked[0]))} (${phrase(ranked[0].v)}) and lowest in ${the(where(ranked[n - 1]))} (${phrase(ranked[n - 1].v)}).`;
+    para($("r-map-text"), first,
+      above > 1 && above < n ? `You would be above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(n)} cities and municipalities.` : null,
+      below > 1 && below < n ? `You would be below the 1st percentile in ${fmt.int(below)} of them.` : null,
+      "Most cities and municipalities have no survey figures of their own, so these use the income spread of their province or region, shifted to the place's estimated average income. These percentiles should be interpreted as estimates. Select a place on the map to use it as your location.");
+    const table = () => $("r-map-table").replaceChildren(
+      h("thead", {}, h("tr", {}, h("th", { scope: "col", text: "City or municipality" }), h("th", { scope: "col", text: "Province or region" }), h("th", { scope: "col", class: "n", text: "Your percentile" }))),
+      h("tbody", {}, ranked.map((sh) => h("tr", {}, h("td", { text: sh.l.name }), h("td", { text: sh.l.prov || sh.l.reg }), h("td", { class: "n", text: pctLabel(sh.v) })))));
+    $("r-map-all").ontoggle = () => { if ($("r-map-all").open) table(); };
+    if ($("r-map-all").open) table();
   }
 
   function card(label, value, sub, word) {
@@ -163,6 +223,7 @@ async function boot() {
     };
     if (!pctFig) pctFig = figure($("r-pct-fig"), pctUpdate);
     else pctFig.update(pctUpdate);
+    paintMap(adjusted, place?.town).catch(console.error);
 
     const lead = h("p", {}, "Based on the classification of the Philippine Institute for Development Studies, your income places you in the ", h("strong", { text: cls.name.toLowerCase() }), " class.");
     para($("r-class-text"), lead, `${you} is ${times(mult)} times the poverty line for ${unit}, which is ${fmt.pesoExact(line)} per month in ${P.label} prices.`);
@@ -227,16 +288,17 @@ async function boot() {
     },
     label: (p) => p.name,
     sub: (p) => (p.kind === "reg" ? "Region" : p.kind === "prov" ? `${p.p.level === "district" ? "District" : "Province"} · ${p.p.reg}` : placeSub(p)),
-    onPick: async (it) => {
-      box.value = it.name;
-      picked = it.name;
-      const mine = ++token;
-      const r = await resolve(it);
-      if (mine !== token) return;
-      place = r;
-      render();
-    },
+    onPick: choose,
   });
+  async function choose(it) {
+    box.value = it.name;
+    picked = it.name;
+    const mine = ++token;
+    const r = await resolve(it);
+    if (mine !== token) return;
+    place = r;
+    render();
+  }
   box.addEventListener("input", () => {
     if (picked != null && box.value !== picked) {
       picked = null;

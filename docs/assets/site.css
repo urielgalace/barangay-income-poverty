@@ -390,3 +390,10 @@ details[open] > summary { margin-bottom: 10px; }
 .report-form .hint { font-size: var(--t-xs); color: var(--ink-3); }
 .report-form input, .report-form textarea { width: 100%; }
 textarea { line-height: 1.45; resize: vertical; }
+
+/* ---- calculator map ---- */
+.calc-map { align-items: start; }
+.calc-map .plate { min-height: 0; }
+.calc-map .plate-map svg { max-height: 74vh; }
+.calc-map .plate-map path.here { stroke: #fff; stroke-width: 1.5; }
+.calc-map-side { display: grid; gap: 16px; align-content: start; min-width: 0; }

@@ -1,8 +1,8 @@
 // The report form: a place suggestion like the home page's, place search, and a button that opens GitHub's issue form with
 // the answers filled in.
-import { combobox } from "./lib.js?b=3380a9cdd9";
-import { searchPlaces, placeSub } from "./places.js?b=3380a9cdd9";
-import { suggestInto, randomPlace } from "./locate.js?b=3380a9cdd9";
+import { combobox } from "./lib.js?b=bfc09d4210";
+import { searchPlaces, placeSub } from "./places.js?b=bfc09d4210";
+import { suggestInto, randomPlace } from "./locate.js?b=bfc09d4210";
 
 const $ = (id) => document.getElementById(id);
 const FIELDS = [["r-place", "place"], ["r-problem", "problem"], ["r-source", "source"], ["r-page", "page"]];
