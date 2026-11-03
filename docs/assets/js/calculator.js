@@ -1,8 +1,8 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
-import { getJSON, objects, fmt, h, figure, segmented, combobox, rankMatches } from "./lib.js?b=f2d0e5d55c";
-import { barsH } from "./charts.js?b=f2d0e5d55c";
-import { searchPlaces, placeSub } from "./places.js?b=f2d0e5d55c";
+import { getJSON, objects, fmt, h, figure, segmented, combobox, rankMatches } from "./lib.js?b=3380a9cdd9";
+import { barsH } from "./charts.js?b=3380a9cdd9";
+import { searchPlaces, placeSub } from "./places.js?b=3380a9cdd9";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];
@@ -23,6 +23,8 @@ const shareBelow = (y, d) => 100 * Math.exp(-d.p * Math.log1p(Math.pow(y / d.b, 
 const incomeAt = (u, d) => d.b * Math.pow(Math.pow(u, -1 / d.p) - 1, -1 / d.a);
 const the = (name) => (/^(City of|\d)/.test(name) ? `the ${name}` : name);
 const times = (m) => (m < 100 ? m.toFixed(1) : fmt.int(m));
+// a percentage of the living wage, or a multiple of it once it is above 100%
+const ofWage = (v) => (v <= 100 ? `${fmt.int(v)}%` : `${v < 1000 ? (v / 100).toFixed(1) : fmt.int(v / 100)} times`);
 const para = (box, ...texts) => box.replaceChildren(...texts.filter(Boolean).map((t) => (t instanceof Node ? t : h("p", { text: t }))));
 
 async function boot() {
@@ -140,7 +142,7 @@ async function boot() {
     const cards = [card("Percentile nationwide", pctLabel(natPct))];
     if (local) cards.push(card(`Percentile in ${place.short}`, pctLabel(locPct), lo != null ? `Likely range: ${pctLabel(lo)} to ${pctLabel(hi)}` : place.own ? null : "Rough estimate"));
     cards.push(card("Income class", cls.name, `${times(mult)} times the poverty line`, true));
-    cards.push(card("Share of the living wage", `${fmt.int(pct)}%`, house ? `Household of ${n}` : "One person"));
+    cards.push(card(pct > 100 ? "Compared with the living wage" : "Share of the living wage", ofWage(pct), house ? `Household of ${n}` : "One person"));
     $("r-cards").replaceChildren(...cards);
 
     para($("r-pct-text"),
@@ -181,12 +183,13 @@ async function boot() {
     const flw = fmt.pesoExact(w.flw);
     const five = house && n === 5;
     const opening = `IBON Foundation estimates that a family of five in ${w.area} should receive ${flw} per month to live decently.`;
-    const meaning = `${you} is ${fmt.int(pct)}% of the living wage for ${five ? "a family of five" : unit}. ${opening}`
+    const meaning = `${you} is ${ofWage(pct)}${pct > 100 ? "" : " of"} the living wage for ${five ? "a family of five" : unit}. ${opening}`
       + (five ? " " : ` Adjusted for household size, that is ${fmt.pesoExact(need)} per month for ${unit}. `)
-      + (pct >= 100 ? `${house ? "Your household has" : "You have"} ${gap} per month left over at that standard.` : `${house ? "Your household falls" : "You would fall"} ${gap} per month short of that standard.`);
+      + (Math.abs(monthly - need) < 1 ? "That is exactly enough to meet that standard."
+        : pct >= 100 ? `${house ? "Your household has" : "You have"} ${gap} per month left over at that standard.` : `${house ? "Your household falls" : "You would fall"} ${gap} per month short of that standard.`);
     para($("r-wage-text"), meaning,
-      house ? null : `If your income also had to support a family of five, it would cover ${fmt.int(monthly / w.flw * 100)}% of IBON's figure.`,
-      `For comparison, a full-time minimum wage earner in ${w.mwArea} earns about ${fmt.pesoExact(w.mw)} per month, or ${fmt.int(w.mw / w.flw * 100)}% of the living wage for a family of five.`,
+      house ? null : `If your income also had to support a family of five, it would ${monthly > w.flw ? `be ${ofWage(monthly / w.flw * 100)}` : `cover ${ofWage(monthly / w.flw * 100)} of`} IBON's figure.`,
+      `For comparison, a full-time minimum wage earner in ${w.mwArea} earns about ${fmt.pesoExact(w.mw)} per month, or ${ofWage(w.mw / w.flw * 100)}${w.mw > w.flw ? "" : " of"} the living wage for a family of five.`,
       w.note);
 
     const wageRows = [
@@ -198,7 +201,7 @@ async function boot() {
       title: "Your income and the living wage",
       sub: `Pesos per month. The living wage is IBON's figure for a family of five${five ? "" : `, adjusted to ${unit}`}. The minimum wage is for one full-time worker.`,
       draw: (b, W) => barsH(b, W, { rows: wageRows, format: fmt.pesoExact }),
-      table: () => ({ headers: ["", "Income (₱) per month", "Share of the living wage"], numeric: [0, 1, 1], rows: wageRows.map((r) => [r.label, fmt.int(r.value), `${fmt.int(r.value / need * 100)}%`]) }),
+      table: () => ({ headers: ["", "Income (₱) per month", "Compared with the living wage"], numeric: [0, 1, 1], rows: wageRows.map((r) => [r.label, fmt.int(r.value), ofWage(r.value / need * 100)]) }),
     };
     if (!wageFig) wageFig = figure($("r-wage-fig"), wageUpdate);
     else wageFig.update(wageUpdate);
