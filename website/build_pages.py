@@ -28,7 +28,7 @@ PAGES = {
     "map": ("Map", "Interactive map of household income and poverty in every Philippine barangay, city and municipality, with margins of error."),
     "trends": ("Trends", "Official household income, poverty, poverty line and inequality series from 2018 to 2025 for any Philippine region, province, city or municipality."),
     "statistics": ("Statistics", "Descriptive statistics on household income and poverty in the Philippines in 2025: regions, distribution, concentration, urban and rural, and full tables."),
-    "calculator": ("Income Calculator", "See where your income ranks in the Philippines and in your area, which income class you belong to, and how your income compares with the living wage."),
+    "calculator": ("Income Percentile Calculator", "See where your income ranks in the Philippines and in your area, which income class you belong to, and how your income compares with the living wage."),
     "methodology": ("Methodology", "How the barangay income and poverty estimates are made: the machine learning models, how they were tested, and every data source."),
     "versions": ("Version History", "The current version of the dataset and the data behind it. Future versions will be listed here."),
     "about": ("About", "About the Barangay Income and Poverty Atlas: common questions, how to report a problem, and credits."),
