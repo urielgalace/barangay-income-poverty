@@ -397,3 +397,4 @@ textarea { line-height: 1.45; resize: vertical; }
 .calc-map .plate-map svg { max-height: 74vh; }
 .calc-map .plate-map path.here { stroke: #fff; stroke-width: 1.5; }
 .calc-map-side { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.calc-map-side th { white-space: normal; }

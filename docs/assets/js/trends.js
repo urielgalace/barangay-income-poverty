@@ -1,6 +1,6 @@
 // Trends: any area's official series, the regions side by side, and every province's change since 2023.
-import { getJSON, fmt, h, figure, combobox, rankMatches, segmented } from "./lib.js?b=22e06ba8c1";
-import { lineChart, dumbbell } from "./charts.js?b=22e06ba8c1";
+import { getJSON, fmt, h, figure, combobox, rankMatches, segmented } from "./lib.js?b=dde6880f25";
+import { lineChart, dumbbell } from "./charts.js?b=dde6880f25";
 
 const YEARS = [2018, 2021, 2023, 2025];
 let series;

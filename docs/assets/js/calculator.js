@@ -1,9 +1,9 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
-import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=22e06ba8c1";
-import { barsH } from "./charts.js?b=22e06ba8c1";
-import { RAMPS, colorOf } from "./ramps.js?b=22e06ba8c1";
-import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=22e06ba8c1";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=dde6880f25";
+import { barsH } from "./charts.js?b=dde6880f25";
+import { RAMPS, colorOf } from "./ramps.js?b=dde6880f25";
+import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=dde6880f25";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];
@@ -104,51 +104,104 @@ async function boot() {
     return { ...w, area: w.label, mwArea: w.label, note: "" };
   }
 
-  // ---- the area map, shown once a place is chosen: your percentile in each barangay of the chosen city or municipality,
-  // or in each city and municipality of the chosen province or region. Drawn when the place changes, recoloured as you type.
+  // ---- the area map, shown once a place is chosen, at the chosen place's own level: the barangays of its city or
+  // municipality, the cities and municipalities of its province, the provinces of its region, or the regions of the
+  // country. Coloured by your percentile in each; drawn when the place changes and recoloured as you type.
   let area = null;
   let areaBuild = 0;
   let areaPaint = 0;
+  let hover = { n: 1, house: false, period: "month" };     // what the tooltip's average income is expressed in
   $("r-scale").replaceChildren(...BANDS.colors.map((c, i) => h("div", { class: "sw" }, h("i", { style: `background:${c}` }), h("span", { text: BAND_TICKS[i] }))));
+  const NOUN = { barangays: "Barangay", "cities and municipalities": "City or municipality", provinces: "Province", districts: "District", regions: "Region" };
+  const plain = (name) => name.replace(/^the /, "").replace(/^./, (c) => c.toUpperCase());
+  const allProvinces = objects(ar.province);
+  const avgLabel = () => `average income, ${hover.house ? `household of ${hover.n}` : "one person"}, per ${hover.period}`;
 
-  async function areaUnits(p) {
-    if (p.lgu) {
+  function areaSpec(p) {
+    if (p.bgyId) return { level: "bgy", key: `bgys:${p.lgu.id}`, self: p.bgyId };
+    if (p.lgu) return { level: "lgu", key: `lgus:${p.lgu.parent}`, self: p.lgu.id };
+    if (p.region) return { level: "reg", key: "regions", self: p.region };
+    return { level: "prov", key: `provs:${p.reg}`, self: p.parent };
+  }
+
+  // places without survey figures of their own borrow the curve of their province or region, and the note says so
+  function borrowNote(units, word, every, where) {
+    const tail = "These percentiles should be interpreted as estimates. Select a place on the map to use it as your location.";
+    const borrowed = units.filter((u) => u.d && !u.own);
+    if (!borrowed.length) return units.length === 1 ? `${units[0].label} has survey figures of its own. ${tail}` : `Every ${every} in ${where} has survey figures of its own. ${tail}`;
+    const refs = [...new Set(borrowed.map((u) => u.d.id))];
+    const ref = refs.length === 1 ? refName(borrowed[0].d) : refs.some((r) => C.reg[r] != null) ? "their province or region" : "their province";
+    const share = borrowed.length === units.length ? "The" : borrowed.length * 2 > units.length ? "Most" : "Some";
+    return `${share} ${word} in ${where} have no survey figures of their own, so these use the income spread of ${ref} as a whole, shifted to the place's estimated average income. ${tail}`;
+  }
+
+  async function areaUnits(spec, p) {
+    if (spec.level === "bgy") {
       const l = p.lgu;
       const d = C.dist[C.lgu[l.id]];
       const { bgys } = await loadPlaces();
-      const chunks = [...new Set(bgys.filter((b) => b.lgu.id === l.id).map((b) => b.chunk))];
+      const pts = new Map(bgys.filter((b) => b.lgu.id === l.id).map((b) => [b.id, b]));
+      const chunks = [...new Set([...pts.values()].map((b) => b.chunk))];
       const files = await Promise.all(chunks.map((c) => Promise.all([getJSON(`bgy/${c}.geo.json`), getJSON(`bgy/${c}.json`), c])));
       const units = [];
       for (const [geo, v, chunk] of files) {
         geo.ids.forEach((id, i) => {
           if (v.c[i] !== l.id) return;
           const live = v.t[i] !== 3 && v.i[i] != null;
-          units.push({ id, name: v.n[i] || "Not a barangay", geom: geo.geom[i], d, k: live ? scaled(v.i[i], v.h[i] / v.f[i], d) : null,
-            pick: v.t[i] !== 3 ? { kind: "bgy", name: v.n[i], lgu: l, chunk, id } : null });
+          const name = v.n[i] || "Not a barangay";
+          units.push({ id, name, label: name, geom: geo.geom[i], d, own: false, k: live ? scaled(v.i[i], v.h[i] / v.f[i], d) : null,
+            lon: pts.get(id)?.lon, lat: pts.get(id)?.lat, pick: v.t[i] !== 3 ? { kind: "bgy", name: v.n[i], lgu: l, chunk, id } : null });
         });
       }
       return { title: `Your percentile in each barangay of ${cityFirst(l.name)}`, word: "barangays", one: "barangay", where: cityFirst(l.name), units,
         note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These rankings should therefore be interpreted as rough estimates. Select a barangay on the map to use it as your location.` };
     }
-    const [geo, lg] = await Promise.all([getJSON("geo/lgu.json"), getJSON("lgus.json")]);
-    const byId = new Map(objects(lg).map((l) => [l.id, l]));
-    const units = [];
-    geo.ids.forEach((id, i) => {
-      const l = byId.get(id);
-      if (!l || (p.region ? l.reg !== p.region : l.parent !== p.parent)) return;
-      const d = C.dist[C.lgu[l.id]];
-      units.push({ id, name: l.name, geom: geo.geom[i], d, k: l.i != null ? (d.id === l.id ? 1 : scaled(l.i, l.pop / l.hh, d)) : null,
-        pick: { kind: "lgu", name: l.name, lgu: l, id: l.id } });
+    if (spec.level === "lgu") {
+      const [geo, lg] = await Promise.all([getJSON("geo/lgu.json"), getJSON("lgus.json")]);
+      const shape = new Map(geo.ids.map((id, i) => [id, geo.geom[i]]));
+      const towns = objects(lg);
+      let members = towns.filter((l) => l.parent === p.lgu.parent);
+      let where = the(p.lgu.parent.replace(/ \(BARMM residual\)/, ""));
+      // Metro Manila's districts are statistical units rather than provinces, and a few cities are province-level areas of their
+      // own (Isabela City, Cotabato City): these show their region
+      if (members.length < 2 || p.lgu.reg === "NCR") {
+        members = towns.filter((l) => l.reg === p.lgu.reg);
+        where = regionLabel(p.lgu.reg);
+      }
+      const units = members.filter((l) => shape.has(l.id)).map((l) => {
+        const d = C.dist[C.lgu[l.id]];
+        const own = d.id === l.id;
+        return { id: l.id, name: cityFirst(l.name), label: cityFirst(l.name), geom: shape.get(l.id), d, own, k: l.i != null ? (own ? 1 : scaled(l.i, l.pop / l.hh, d)) : null,
+          lon: l.lon, lat: l.lat, pick: { kind: "lgu", name: l.name, lgu: l, id: l.id } };
+      });
+      return { title: `Your percentile in each city and municipality of ${where}`, word: "cities and municipalities", one: "city or municipality", where, units,
+        note: borrowNote(units, "cities and municipalities", "city and municipality", where) };
+    }
+    if (spec.level === "prov") {
+      const geo = await getJSON("geo/province.json");
+      const shape = new Map(geo.ids.map((id, i) => [id, geo.geom[i]]));
+      const members = allProvinces.filter((x) => x.reg === p.reg && shape.has(x.id));
+      const districts = members.every((x) => x.level === "district");
+      const where = regionLabel(p.reg);
+      const units = members.map((x) => {
+        const d = C.dist[C.prov[x.id]];
+        const own = d.id === x.id;
+        const name = the(provName(x));
+        return { id: x.id, name, label: plain(name), geom: shape.get(x.id), d, own, k: own ? 1 : scaled(x.i, x.pop / x.hh, d), lon: x.lon, lat: x.lat,
+          pick: { kind: "prov", name: provName(x), p: x } };
+      });
+      const word = districts ? "districts" : "provinces";
+      const one = districts ? "district" : "province";
+      return { title: `Your percentile in each ${one} of ${where}`, word, one, where, units, note: borrowNote(units, word, one, where) };
+    }
+    const geo = await getJSON("geo/region.json");
+    const shape = new Map(geo.ids.map((id, i) => [id, geo.geom[i]]));
+    const units = regions.filter((r) => shape.has(r.id)).map((r) => {
+      const name = regionLabel(r.short);
+      return { id: r.short, name, label: plain(name), geom: shape.get(r.id), d: C.dist[C.reg[r.short]], own: true, k: 1, lon: r.lon, lat: r.lat, pick: { kind: "reg", name: r.name, r } };
     });
-    const where = p.region ? regionLabel(p.region) : the(p.name);
-    // places without survey figures of their own borrow the curve of their province or region
-    const borrowed = units.filter((u) => u.d.id !== u.pick.lgu.id);
-    const refs = [...new Set(borrowed.map((u) => u.d.id))];
-    const ref = refs.length === 1 ? refName(borrowed[0].d) : refs.some((r) => C.reg[r] != null) ? "their province or region" : "their province";
-    const tail = "These percentiles should be interpreted as estimates. Select a place on the map to use it as your location.";
-    return { title: `Your percentile in each city and municipality of ${where}`, word: "cities and municipalities", one: "city or municipality", where, units,
-      note: borrowed.length ? `${borrowed.length * 2 > units.length ? "Most" : "Some"} cities and municipalities in ${where} have no survey figures of their own, so these use the income spread of ${ref} as a whole, shifted to the place's estimated average income. ${tail}`
-        : units.length === 1 ? `${cityFirst(units[0].name)} has survey figures of its own. ${tail}` : `Every city and municipality in ${where} has survey figures of its own. ${tail}` };
+    return { title: "Your percentile in each region of the Philippines", word: "regions", one: "region", where: "the Philippines", units,
+      note: borrowNote(units, "regions", "region", "the Philippines") };
   }
 
   // outlines are stored as integer degrees × 10,000, each point after the first as a step from the one before
@@ -191,7 +244,10 @@ async function boot() {
         d += `${seg}Z`;
       }
       u.p = s("path", { d, "fill-rule": "evenodd" });
-      u.p.addEventListener("pointermove", (e) => { if (u.v != null) tip.show(e.clientX, e.clientY, u.name, [{ value: pctLabel(u.v), label: "percentile" }]); });
+      u.p.addEventListener("pointermove", (e) => {
+        if (u.v == null) return;
+        tip.show(e.clientX, e.clientY, u.label, [{ value: pctLabel(u.v), label: "your percentile" }, ...(u.avg != null ? [{ value: fmt.peso(u.avg), label: avgLabel() }] : [])]);
+      });
       u.p.addEventListener("pointerleave", () => tip.hide());
       if (u.pick) u.p.addEventListener("click", () => choose(u.pick));
       else u.p.style.cursor = "default";
@@ -200,54 +256,25 @@ async function boot() {
     return svg;
   }
 
-  // the two nearest places at the chosen place's own level: barangays of the same city or municipality, or the nearest
-  // cities and municipalities, provinces or regions, by the distance between their centre points
-  let peers = null;
-  const nearest = (here, list, entry) => {
+  // the two places nearest to the chosen one on the map, by the distance between their centre points
+  const nearest = (here, list) => {
     const kx = Math.cos((here.lat * Math.PI) / 180);
-    return list.filter((x) => x.lon != null && x.lat != null).map((x) => [((x.lon - here.lon) * kx) ** 2 + (x.lat - here.lat) ** 2, x])
-      .sort((x, y) => x[0] - y[0]).slice(0, 2).map((x) => entry(x[1]));
+    return list.map((x) => [((x.lon - here.lon) * kx) ** 2 + (x.lat - here.lat) ** 2, x]).sort((a, b) => a[0] - b[0]).slice(0, 2).map((x) => x[1]);
   };
-  async function nearestPeers(p) {
-    if (p.bgyId) {
-      const { bgys } = await loadPlaces();
-      const pts = new Map(bgys.filter((b) => b.lgu.id === p.lgu.id).map((b) => [b.id, b]));
-      const here = pts.get(p.bgyId);
-      const others = area.units.filter((u) => u.id !== p.bgyId && u.k != null && pts.has(u.id)).map((u) => ({ lon: pts.get(u.id).lon, lat: pts.get(u.id).lat, u }));
-      return { word: "barangays", one: "barangay", near: here ? nearest(here, others, (x) => ({ name: x.u.name, d: x.u.d, k: x.u.k })) : [] };
-    }
-    if (p.lgu) {
-      const others = objects(await getJSON("lgus.json")).filter((l) => l.id !== p.lgu.id && l.i != null);
-      return { word: "cities and municipalities", one: "city or municipality", near: nearest(p.lgu, others, (l) => {
-        const d = C.dist[C.lgu[l.id]];
-        return { name: cityFirst(l.name), d, k: d.id === l.id ? 1 : scaled(l.i, l.pop / l.hh, d) };
-      }) };
-    }
-    if (p.region) {
-      const here = regions.find((r) => r.short === p.region);
-      return { word: "regions", one: "region", near: nearest(here, regions.filter((r) => r.short !== p.region), (r) => ({ name: regionLabel(r.short), d: C.dist[C.reg[r.short]], k: 1 })) };
-    }
-    // NCR's districts are compared with each other, provinces with provinces
-    const here = provinces.find((x) => x.id === p.parent);
-    const district = here?.level === "district";
-    const others = provinces.filter((x) => x.id !== p.parent && !/residual/.test(x.name) && (x.level === "district") === district);
-    return { word: district ? "districts" : "provinces", one: district ? "district" : "province", near: here ? nearest(here, others, (x) => {
-      const d = C.dist[C.prov[x.id]];
-      return { name: the(provName(x)), d, k: d.id === x.id ? 1 : scaled(x.i, x.pop / x.hh, d) };
-    }) : [] };
-  }
 
-  async function paintArea(adjusted) {
+  async function paintArea(adjusted, n, house, period) {
     const sec = $("r-area");
     const p = place;
     if (!p) { sec.hidden = true; return; }
     const pid = ++areaPaint;
-    if (!area || area.key !== p.key) {
+    const spec = areaSpec(p);
+    if (!area || area.key !== spec.key) {
       const bid = ++areaBuild;
-      const built = await areaUnits(p);
+      const built = await areaUnits(spec, p);
       if (bid !== areaBuild) return;
-      built.key = p.key;
+      built.key = spec.key;
       built.svg = drawUnits(built.units);
+      tip.hide();                      // the shapes under any open tooltip are about to be replaced
       area = built;
       $("r-map").replaceChildren(area.svg);
       $("r-area-title").textContent = area.title;
@@ -255,45 +282,49 @@ async function boot() {
     }
     if (pid !== areaPaint || place !== p) return;
     sec.hidden = false;
+    hover = { n, house, period };
+    const yearly = period === "year" ? 12 : 1;
     const ranked = [];
     for (const u of area.units) {
       u.v = u.k != null ? shareBelow(adjusted / u.k, u.d) : null;
+      // the place's average income, adjusted to your household size and period, in the latest month's prices
+      u.avg = u.k != null ? (u.d.i / Math.sqrt(u.d.z)) * u.k * Math.sqrt(n) * P.factor * yearly : null;
       u.p.setAttribute("fill", colorOf(BANDS, u.v));
-      u.p.classList.toggle("here", u.id === p.bgyId);
+      u.p.classList.toggle("here", u.id === spec.self);
       if (u.v != null) ranked.push(u);
     }
-    const mark = area.units.find((u) => u.id === p.bgyId);
-    if (mark) area.svg.append(mark.p);     // drawn last, so its outline shows on every side
+    const me = area.units.find((u) => u.id === spec.self);
+    if (me) area.svg.append(me.p);     // drawn last, so its outline shows on every side
     ranked.sort((a, b) => b.v - a.v);
-    const n = ranked.length;
+    const count = ranked.length;
     const above = ranked.filter((u) => Math.round(u.v) > 99).length;
     const below = ranked.filter((u) => Math.round(u.v) < 1).length;
-    // the chosen place beside its two nearest neighbours at the same level
-    if (!peers || peers.for !== p) {
-      const found = await nearestPeers(p);
-      if (pid !== areaPaint || place !== p) return;
-      peers = { ...found, for: p };
-    }
-    const near = peers.near.map((x) => ({ ...x, v: shareBelow(adjusted / x.k, x.d) }));
-    const self = p.bgyId ? p.short : p.lgu ? cityFirst(p.lgu.name) : p.region ? regionLabel(p.region) : the(p.name);
-    const selfV = p.noData ? null : shareBelow(adjusted / p.k, p.d);
+
+    // the chosen place beside its two nearest neighbours on the map
+    const near = me && me.lon != null ? nearest(me, ranked.filter((u) => u !== me && u.lon != null)) : [];
+    const self = me ? me.name : p.short;
+    const selfV = me ? me.v : null;
+    const isRegion = spec.level === "reg";
     const lead = "After adjusting for household size, your income would place you";
-    const all = (test) => near.length === 2 && [selfV, ...near.map((x) => x.v)].every((v) => test(Math.round(v)));
     const pair = near.length === 2 ? `${placeAt(near[0].v)} in ${near[0].name} and ${phrase(near[1].v)} in ${near[1].name}` : near.length ? `${placeAt(near[0].v)} in ${near[0].name}` : null;
+    const intro = isRegion ? "By comparison," : near.length === 2 ? `In the two nearest ${area.word},` : `In the nearest ${area.one},`;
+    const all = (test) => near.length === 2 && selfV != null && [selfV, ...near.map((x) => x.v)].every((v) => test(Math.round(v)));
+    const both = near.length === 2 ? `${near[0].name} and ${near[1].name}` : "";
     const first = selfV == null
-      ? (pair ? `In the ${near.length === 2 ? `two nearest ${peers.word}` : `nearest ${peers.one}`} to ${self}, your income, adjusted for household size, would place you ${pair}.` : "There are no income estimates for this area.")
-      : all((r) => r > 99) ? `${lead} above the 99th percentile in ${self} and in the two nearest ${peers.word}, ${near[0].name} and ${near[1].name}.`
-        : all((r) => r < 1) ? `${lead} below the 1st percentile in ${self} and in the two nearest ${peers.word}, ${near[0].name} and ${near[1].name}.`
-          : `${lead} ${placeAt(selfV)} in ${self}.${pair ? ` In the ${near.length === 2 ? `two nearest ${peers.word}` : `nearest ${peers.one}`}, it would place you ${pair}.` : ""}`;
+      ? (pair ? `In the ${near.length === 2 ? `two nearest ${area.word}` : `nearest ${area.one}`} to ${self}, your income, adjusted for household size, would place you ${pair}.` : "There are no income estimates for this area.")
+      : all((r) => r > 99) ? (isRegion ? `${lead} above the 99th percentile in ${self}, as well as in ${both}.` : `${lead} above the 99th percentile in ${self} and in the two nearest ${area.word}, ${both}.`)
+        : all((r) => r < 1) ? (isRegion ? `${lead} below the 1st percentile in ${self}, as well as in ${both}.` : `${lead} below the 1st percentile in ${self} and in the two nearest ${area.word}, ${both}.`)
+          : `${lead} ${placeAt(selfV)} in ${self}.${pair ? ` ${intro} it would place you ${pair}.` : ""}`;
     para($("r-map-text"), first,
-      n > 1 && above === n ? `With the same income, adjusted for household size, you would be above the 99th percentile in every one of the ${area.word} in ${area.where}.` : null,
-      n > 1 && below === n ? `With the same income, adjusted for household size, you would be below the 1st percentile in every one of the ${area.word} in ${area.where}.` : null,
-      above > 1 && above < n ? `It would place you above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(n)} ${area.word} in ${area.where}.` : null,
-      below > 1 && below < n ? `It would place you below the 1st percentile in ${fmt.int(below)} of the ${fmt.int(n)} ${area.word} in ${area.where}.` : null,
+      count > 1 && above === count ? `With the same income, adjusted for household size, you would be above the 99th percentile in every one of the ${area.word} in ${area.where}.` : null,
+      count > 1 && below === count ? `With the same income, adjusted for household size, you would be below the 1st percentile in every one of the ${area.word} in ${area.where}.` : null,
+      above > 1 && above < count ? `It would place you above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(count)} ${area.word} in ${area.where}.` : null,
+      below > 1 && below < count ? `It would place you below the 1st percentile in ${fmt.int(below)} of the ${fmt.int(count)} ${area.word} in ${area.where}.` : null,
       area.note);
     const table = () => $("r-map-table").replaceChildren(
-      h("thead", {}, h("tr", {}, h("th", { scope: "col", text: area.word === "barangays" ? "Barangay" : "City or municipality" }), h("th", { scope: "col", class: "n", text: "Your percentile" }))),
-      h("tbody", {}, ranked.map((u) => h("tr", {}, h("td", { text: u.name }), h("td", { class: "n", text: pctLabel(u.v) })))));
+      h("thead", {}, h("tr", {}, h("th", { scope: "col", text: NOUN[area.word] }), h("th", { scope: "col", class: "n", text: "Your percentile" }),
+        h("th", { scope: "col", class: "n", text: `Average income (₱) per ${period}, ${house ? `household of ${n}` : "one person"}` }))),
+      h("tbody", {}, ranked.map((u) => h("tr", {}, h("td", { text: u.label }), h("td", { class: "n", text: pctLabel(u.v) }), h("td", { class: "n", text: fmt.hundreds(u.avg) })))));
     $("r-map-all").ontoggle = () => { if ($("r-map-all").open) table(); };
     if ($("r-map-all").open) table();
   }
@@ -370,7 +401,7 @@ async function boot() {
     };
     if (!pctFig) pctFig = figure($("r-pct-fig"), pctUpdate);
     else pctFig.update(pctUpdate);
-    paintArea(adjusted).catch(console.error);
+    paintArea(adjusted, n, house, period).catch(console.error);
 
     const lead = h("p", {}, "Based on the classification of the Philippine Institute for Development Studies, your income places you in the ", h("strong", { text: cls.name.toLowerCase() }), " class.");
     para($("r-class-text"), lead, `${you} is ${times(mult)} times the poverty line for ${unit}, which is ${fmt.pesoExact(line)} per month in ${P.label} prices.`);
@@ -394,7 +425,7 @@ async function boot() {
     const meaning = `${you} is ${ofWage(pct)}${pct > 100 ? "" : " of"} the living wage for ${five ? "a family of five" : unit}. ${opening}`
       + (five ? " " : ` Adjusted for household size, that is ${fmt.pesoExact(need)} per month for ${unit}. `)
       + (Math.abs(monthly - need) < 1 ? "That is exactly enough to meet that standard."
-        : pct >= 100 ? `${house ? "Your household has" : "You have"} ${gap} per month left over at that standard.` : `${house ? "Your household falls" : "You would fall"} ${gap} per month short of that standard.`);
+        : pct >= 100 ? `${house ? "Your household income" : "Your income"} exceeds that standard by ${gap} per month.` : `${house ? "Your household falls" : "You would fall"} ${gap} per month short of that standard.`);
     para($("r-wage-text"), meaning,
       house ? null : `If your income also had to support a family of five, it would ${monthly > w.flw ? `be ${ofWage(monthly / w.flw * 100)}` : `cover ${ofWage(monthly / w.flw * 100)} of`} IBON's figure.`,
       `For comparison, a full-time minimum wage earner in ${w.mwArea} earns about ${fmt.pesoExact(w.mw)} per month, or ${ofWage(w.mw / w.flw * 100)}${w.mw > w.flw ? "" : " of"} the living wage for a family of five.`,
@@ -407,7 +438,7 @@ async function boot() {
     ];
     const wageUpdate = {
       title: "Your income and the living wage",
-      sub: `Pesos per month. The living wage is IBON's figure for a family of five${five ? "" : `, adjusted to ${unit}`}. The minimum wage is for one full-time worker.`,
+      sub: `The living wage is IBON's figure for a family of five${five ? "" : `, adjusted to ${unit}`}. The minimum wage is for one full-time worker.`,
       draw: (b, W) => barsH(b, W, { rows: wageRows, format: fmt.pesoExact }),
       table: () => ({ headers: ["", "Income (₱) per month", "Compared with the living wage"], numeric: [0, 1, 1], rows: wageRows.map((r) => [r.label, fmt.int(r.value), ofWage(r.value / need * 100)]) }),
     };
