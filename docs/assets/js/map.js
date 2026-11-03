@@ -1,8 +1,8 @@
 // The interactive map. Cities and municipalities load at once; barangays load province by province as you zoom in.
-import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=f8bef2dba2";
-import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=f8bef2dba2";
-import { searchPlaces, placeSub } from "./places.js?b=f8bef2dba2";
-import { lineChart } from "./charts.js?b=f8bef2dba2";
+import { getJSON, objects, fmt, h, s, combobox, segmented } from "./lib.js?b=4de91fd819";
+import { RAMPS, DIFF, NODATA, LAND, SEA } from "./ramps.js?b=4de91fd819";
+import { searchPlaces, placeSub } from "./places.js?b=4de91fd819";
+import { lineChart } from "./charts.js?b=4de91fd819";
 
 const BGY_MIN_ZOOM = 8;
 const MAX_CHUNKS = 28;
@@ -430,7 +430,7 @@ async function renderDetail(sel) {
     } else if (p.p == null) {
       box.append(h("p", { class: "small", text: "The 2024 census counted no residents here, so there are no estimates." }));
     } else {
-      if (p.hc) box.append(bigValue("Average monthly household income, set by hand", fmt.peso(p.i), `The average income of the richest tenth of households in ${l ? `${/^City of /.test(l.name) ? "the " : ""}${l.name}` : "this city"} (FIES 2025), because satellite data cannot capture the incomes of exclusive gated villages. The model estimated ${fmt.peso(p.io)}.`));
+      if (p.hc) box.append(bigValue("Average monthly household income", fmt.peso(p.i), `The average income of the richest tenth of households in ${l ? `${/^City of /.test(l.name) ? "the " : ""}${l.name}` : "this city"} (FIES 2025), because satellite data cannot capture the incomes of exclusive gated villages. The model estimated ${fmt.peso(p.io)}.`));
       else box.append(bigValue("Estimated average monthly household income", fmt.peso(p.i), `90% interval ${fmt.peso(p.il)} to ${fmt.peso(p.ih)}`, intervalBar(p.il, p.i, p.ih, 120000, "var(--income)", natI, `Philippines ${fmt.pesoExact(natI)}`)));
       box.append(bigValue("Estimated poverty incidence", RAMPS.poverty.format(p.p), `90% interval ${p.pl.toFixed(1)}% to ${p.ph.toFixed(1)}%`, intervalBar(p.pl, p.p, p.ph, 100, "var(--poverty)", nat, `Philippines ${nat}%`)));
       box.append(h("dl", { class: "d-kv" },

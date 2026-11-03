@@ -1,9 +1,9 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
-import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=f8bef2dba2";
-import { barsH } from "./charts.js?b=f8bef2dba2";
-import { RAMPS, colorOf } from "./ramps.js?b=f8bef2dba2";
-import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=f8bef2dba2";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=4de91fd819";
+import { barsH } from "./charts.js?b=4de91fd819";
+import { RAMPS, colorOf } from "./ramps.js?b=4de91fd819";
+import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=4de91fd819";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];

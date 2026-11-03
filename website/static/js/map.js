@@ -430,7 +430,7 @@ async function renderDetail(sel) {
     } else if (p.p == null) {
       box.append(h("p", { class: "small", text: "The 2024 census counted no residents here, so there are no estimates." }));
     } else {
-      if (p.hc) box.append(bigValue("Average monthly household income, set by hand", fmt.peso(p.i), `The average income of the richest tenth of households in ${l ? `${/^City of /.test(l.name) ? "the " : ""}${l.name}` : "this city"} (FIES 2025), because satellite data cannot capture the incomes of exclusive gated villages. The model estimated ${fmt.peso(p.io)}.`));
+      if (p.hc) box.append(bigValue("Average monthly household income", fmt.peso(p.i), `The average income of the richest tenth of households in ${l ? `${/^City of /.test(l.name) ? "the " : ""}${l.name}` : "this city"} (FIES 2025), because satellite data cannot capture the incomes of exclusive gated villages. The model estimated ${fmt.peso(p.io)}.`));
       else box.append(bigValue("Estimated average monthly household income", fmt.peso(p.i), `90% interval ${fmt.peso(p.il)} to ${fmt.peso(p.ih)}`, intervalBar(p.il, p.i, p.ih, 120000, "var(--income)", natI, `Philippines ${fmt.pesoExact(natI)}`)));
       box.append(bigValue("Estimated poverty incidence", RAMPS.poverty.format(p.p), `90% interval ${p.pl.toFixed(1)}% to ${p.ph.toFixed(1)}%`, intervalBar(p.pl, p.p, p.ph, 100, "var(--poverty)", nat, `Philippines ${nat}%`)));
       box.append(h("dl", { class: "d-kv" },
