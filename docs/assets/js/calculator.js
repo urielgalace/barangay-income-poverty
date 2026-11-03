@@ -1,9 +1,9 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
-import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=bfc09d4210";
-import { barsH } from "./charts.js?b=bfc09d4210";
-import { RAMPS, colorOf } from "./ramps.js?b=bfc09d4210";
-import { searchPlaces, placeSub } from "./places.js?b=bfc09d4210";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=264283bbbb";
+import { barsH } from "./charts.js?b=264283bbbb";
+import { RAMPS, colorOf } from "./ramps.js?b=264283bbbb";
+import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=264283bbbb";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];
@@ -62,24 +62,24 @@ async function boot() {
   async function resolve(it) {
     if (it.kind === "reg") {
       const s = it.r.short;
-      return { name: regionLabel(s), short: s, d: C.dist[C.reg[s]], k: 1, own: true, reg: s };
+      return { name: regionLabel(s), short: s, d: C.dist[C.reg[s]], k: 1, own: true, reg: s, region: s, key: `reg:${s}` };
     }
     if (it.kind === "prov") {
       const p = it.p;
       const d = C.dist[C.prov[p.id]];
       const own = d.id === p.id;
-      return { name: provName(p), short: provName(p), d, k: own ? 1 : scaled(p.i, p.pop / p.hh, d), own, ref: refName(d), reg: p.reg, parent: p.id };
+      return { name: provName(p), short: provName(p), d, k: own ? 1 : scaled(p.i, p.pop / p.hh, d), own, ref: refName(d), reg: p.reg, parent: p.id, key: `prov:${p.id}` };
     }
     const l = it.lgu;
     const d = C.dist[C.lgu[l.id]];
     if (it.kind === "lgu") {
       const own = d.id === l.id;
-      return { name: l.name, short: l.name, d, k: own ? 1 : scaled(l.i, l.pop / l.hh, d), own, ref: refName(d, l), reg: l.reg, parent: l.parent, town: l.id };
+      return { name: l.name, short: l.name, d, k: own ? 1 : scaled(l.i, l.pop / l.hh, d), own, ref: refName(d, l), reg: l.reg, parent: l.parent, lgu: l, key: `lgu:${l.id}` };
     }
     const t = await getJSON(`bgy/${it.chunk}.json`);
     const j = t.ids.indexOf(it.id);
     const name = `${it.name}, ${l.name}`;
-    const base = { name, short: it.name, reg: l.reg, parent: l.parent, ref: refName(d, l), d, town: l.id };
+    const base = { name, short: it.name, reg: l.reg, parent: l.parent, ref: refName(d, l), d, lgu: l, key: `lgu:${l.id}`, bgyId: it.id };
     if (j < 0 || t.i[j] == null) return { ...base, noData: true };
     const k = scaled(t.i[j], t.h[j] / t.f[j], d);
     return { ...base, k, kLo: t.il[j] != null ? k * t.il[j] / t.i[j] : null, kHi: t.ih[j] != null ? k * t.ih[j] / t.i[j] : null };
@@ -99,54 +99,138 @@ async function boot() {
     return { ...w, area: w.label, mwArea: w.label, note: "" };
   }
 
-  // ---- the map: your percentile among the residents of each city and municipality, drawn once and recoloured
-  let mapReady;
-  const loadMap = () => (mapReady ||= Promise.all([getJSON("geo/home.json"), getJSON("lgus.json")]).then(([geo, lg]) => {
-    const byId = new Map(objects(lg).map((l) => [l.id, l]));
-    const svg = s("svg", { viewBox: `0 0 ${geo.w} ${geo.h}`, role: "img", "aria-label": "Map of your income percentile in each city and municipality. The table beside it lists the same figures." });
-    const shapes = geo.ids.map((id, i) => {
-      const l = byId.get(id);
-      const d = l ? C.dist[C.lgu[l.id]] : null;
-      const shape = { p: s("path", { d: geo.d[i] }), l, d, k: d ? (d.id === l.id ? 1 : scaled(l.i, l.pop / l.hh, d)) : null, v: null };
-      shape.p.addEventListener("pointermove", (e) => {
-        if (shape.v != null) tip.show(e.clientX, e.clientY, [l.name, l.prov || l.reg].filter(Boolean).join(", "), [{ value: pctLabel(shape.v), label: "percentile" }]);
-      });
-      shape.p.addEventListener("pointerleave", () => tip.hide());
-      if (l) shape.p.addEventListener("click", () => choose({ kind: "lgu", name: l.name, lgu: l, id: l.id }));
-      svg.append(shape.p);
-      return shape;
-    });
-    $("r-map").replaceChildren(svg);
-    $("r-scale").replaceChildren(...BANDS.colors.map((c, i) => h("div", { class: "sw" }, h("i", { style: `background:${c}` }), h("span", { text: BAND_TICKS[i] }))));
-    return { svg, shapes };
-  }));
+  // ---- the area map, shown once a place is chosen: your percentile in each barangay of the chosen city or municipality,
+  // or in each city and municipality of the chosen province or region. Drawn when the place changes, recoloured as you type.
+  let area = null;
+  let areaBuild = 0;
+  let areaPaint = 0;
+  $("r-scale").replaceChildren(...BANDS.colors.map((c, i) => h("div", { class: "sw" }, h("i", { style: `background:${c}` }), h("span", { text: BAND_TICKS[i] }))));
 
-  async function paintMap(adjusted, here) {
-    const { svg, shapes } = await loadMap();
-    const ranked = [];
-    for (const sh of shapes) {
-      sh.v = sh.d && sh.l.i != null ? shareBelow(adjusted / sh.k, sh.d) : null;
-      sh.p.setAttribute("fill", colorOf(BANDS, sh.v));
-      sh.p.classList.toggle("here", sh.l != null && sh.l.id === here);
-      if (sh.v != null) ranked.push(sh);
+  async function areaUnits(p) {
+    if (p.lgu) {
+      const l = p.lgu;
+      const d = C.dist[C.lgu[l.id]];
+      const { bgys } = await loadPlaces();
+      const chunks = [...new Set(bgys.filter((b) => b.lgu.id === l.id).map((b) => b.chunk))];
+      const files = await Promise.all(chunks.map((c) => Promise.all([getJSON(`bgy/${c}.geo.json`), getJSON(`bgy/${c}.json`), c])));
+      const units = [];
+      for (const [geo, v, chunk] of files) {
+        geo.ids.forEach((id, i) => {
+          if (v.c[i] !== l.id) return;
+          const live = v.t[i] !== 3 && v.i[i] != null;
+          units.push({ id, name: v.n[i] || "Not a barangay", geom: geo.geom[i], d, k: live ? scaled(v.i[i], v.h[i] / v.f[i], d) : null,
+            pick: v.t[i] !== 3 ? { kind: "bgy", name: v.n[i], lgu: l, chunk, id } : null });
+        });
+      }
+      return { title: `Your percentile in each barangay of ${the(l.name)}`, word: "barangays", units,
+        note: `Barangay figures apply the income spread of ${the(refName(d, l))} to each barangay's estimated average income, adjusted for household size, so they should be interpreted as estimates. Select a barangay on the map to use it as your location.` };
     }
-    const mark = shapes.find((sh) => sh.l && sh.l.id === here);
-    if (mark) svg.append(mark.p);     // drawn last, so its outline shows on every side
+    const [geo, lg] = await Promise.all([getJSON("geo/lgu.json"), getJSON("lgus.json")]);
+    const byId = new Map(objects(lg).map((l) => [l.id, l]));
+    const units = [];
+    geo.ids.forEach((id, i) => {
+      const l = byId.get(id);
+      if (!l || (p.region ? l.reg !== p.region : l.parent !== p.parent)) return;
+      const d = C.dist[C.lgu[l.id]];
+      units.push({ id, name: l.name, geom: geo.geom[i], d, k: l.i != null ? (d.id === l.id ? 1 : scaled(l.i, l.pop / l.hh, d)) : null,
+        pick: { kind: "lgu", name: l.name, lgu: l, id: l.id } });
+    });
+    return { title: `Your percentile in each city and municipality of ${p.region ? regionLabel(p.region) : the(p.name)}`, word: "cities and municipalities", units,
+      note: "Most cities and municipalities have no survey figures of their own, so these use the income spread of their province or region, shifted to the place's estimated average income. These percentiles should be interpreted as estimates. Select a place on the map to use it as your location." };
+  }
+
+  // outlines are stored as integer degrees × 10,000, each point after the first as a step from the one before
+  function drawUnits(units) {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    const shapes = units.map((u) => u.geom.map((part) => part.map((a) => {
+      const r = new Float64Array(a.length);
+      let x = a[0];
+      let y = a[1];
+      for (let i = 0; i < a.length; i += 2) {
+        if (i) { x += a[i]; y += a[i + 1]; }
+        r[i] = x;
+        r[i + 1] = y;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      return r;
+    })));
+    const kx = Math.cos((((y0 + y1) / 2) / 1e4) * Math.PI / 180);
+    const W = 600;
+    const sc = W / Math.max((x1 - x0) * kx, 1);
+    const H = Math.max(120, (y1 - y0) * sc);
+    const svg = s("svg", { viewBox: `0 0 ${W} ${H.toFixed(1)}`, role: "img", "aria-label": "Map of your income percentile in each part of the chosen area. The table beside it lists the same figures." });
+    units.forEach((u, j) => {
+      let d = "";
+      for (const part of shapes[j]) for (const r of part) {
+        let seg = "";
+        let lx = null;
+        let ly = null;
+        for (let i = 0; i < r.length; i += 2) {
+          const X = (r[i] - x0) * kx * sc;
+          const Y = (y1 - r[i + 1]) * sc;
+          if (lx !== null && Math.abs(X - lx) < .6 && Math.abs(Y - ly) < .6) continue;     // points closer than a pixel add nothing
+          seg += `${seg ? "L" : "M"}${X.toFixed(1)},${Y.toFixed(1)}`;
+          lx = X;
+          ly = Y;
+        }
+        d += `${seg}Z`;
+      }
+      u.p = s("path", { d, "fill-rule": "evenodd" });
+      u.p.addEventListener("pointermove", (e) => { if (u.v != null) tip.show(e.clientX, e.clientY, u.name, [{ value: pctLabel(u.v), label: "percentile" }]); });
+      u.p.addEventListener("pointerleave", () => tip.hide());
+      if (u.pick) u.p.addEventListener("click", () => choose(u.pick));
+      else u.p.style.cursor = "default";
+      svg.append(u.p);
+    });
+    return svg;
+  }
+
+  async function paintArea(adjusted) {
+    const sec = $("r-area");
+    const p = place;
+    if (!p) { sec.hidden = true; return; }
+    const pid = ++areaPaint;
+    if (!area || area.key !== p.key) {
+      const bid = ++areaBuild;
+      const built = await areaUnits(p);
+      if (bid !== areaBuild) return;
+      built.key = p.key;
+      built.svg = drawUnits(built.units);
+      area = built;
+      $("r-map").replaceChildren(area.svg);
+      $("r-area-title").textContent = area.title;
+      $("r-map-all-label").textContent = `All ${area.word}`;
+    }
+    if (pid !== areaPaint || place !== p) return;
+    sec.hidden = false;
+    const ranked = [];
+    for (const u of area.units) {
+      u.v = u.k != null ? shareBelow(adjusted / u.k, u.d) : null;
+      u.p.setAttribute("fill", colorOf(BANDS, u.v));
+      u.p.classList.toggle("here", u.id === p.bgyId);
+      if (u.v != null) ranked.push(u);
+    }
+    const mark = area.units.find((u) => u.id === p.bgyId);
+    if (mark) area.svg.append(mark.p);     // drawn last, so its outline shows on every side
     ranked.sort((a, b) => b.v - a.v);
-    const where = (sh) => [sh.l.name, sh.l.prov || sh.l.reg].filter(Boolean).join(", ");
-    const above = ranked.filter((sh) => Math.round(sh.v) > 99).length;
-    const below = ranked.filter((sh) => Math.round(sh.v) < 1).length;
     const n = ranked.length;
-    const first = above === n ? `With the same income, adjusted for household size, you would be above the 99th percentile in every city and municipality.`
-      : below === n ? `With the same income, adjusted for household size, you would be below the 1st percentile in every city and municipality.`
-        : `With the same income, adjusted for household size, you would rank highest among the residents of ${the(where(ranked[0]))} (${phrase(ranked[0].v)}) and lowest in ${the(where(ranked[n - 1]))} (${phrase(ranked[n - 1].v)}).`;
+    const above = ranked.filter((u) => Math.round(u.v) > 99).length;
+    const below = ranked.filter((u) => Math.round(u.v) < 1).length;
+    const lead = "With the same income, adjusted for household size,";
+    const first = !n ? "There are no income estimates for this area."
+      : above === n ? `${lead} you would be above the 99th percentile in every one of these ${area.word}.`
+        : below === n ? `${lead} you would be below the 1st percentile in every one of these ${area.word}.`
+          : `${lead} you would rank highest among the residents of ${the(ranked[0].name)} (${phrase(ranked[0].v)}) and lowest in ${the(ranked[n - 1].name)} (${phrase(ranked[n - 1].v)}).`;
     para($("r-map-text"), first,
-      above > 1 && above < n ? `You would be above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(n)} cities and municipalities.` : null,
+      above > 1 && above < n ? `You would be above the 99th percentile in ${fmt.int(above)} of the ${fmt.int(n)} ${area.word}.` : null,
       below > 1 && below < n ? `You would be below the 1st percentile in ${fmt.int(below)} of them.` : null,
-      "Most cities and municipalities have no survey figures of their own, so these use the income spread of their province or region, shifted to the place's estimated average income. These percentiles should be interpreted as estimates. Select a place on the map to use it as your location.");
+      area.note);
     const table = () => $("r-map-table").replaceChildren(
-      h("thead", {}, h("tr", {}, h("th", { scope: "col", text: "City or municipality" }), h("th", { scope: "col", text: "Province or region" }), h("th", { scope: "col", class: "n", text: "Your percentile" }))),
-      h("tbody", {}, ranked.map((sh) => h("tr", {}, h("td", { text: sh.l.name }), h("td", { text: sh.l.prov || sh.l.reg }), h("td", { class: "n", text: pctLabel(sh.v) })))));
+      h("thead", {}, h("tr", {}, h("th", { scope: "col", text: area.word === "barangays" ? "Barangay" : "City or municipality" }), h("th", { scope: "col", class: "n", text: "Your percentile" }))),
+      h("tbody", {}, ranked.map((u) => h("tr", {}, h("td", { text: u.name }), h("td", { class: "n", text: pctLabel(u.v) })))));
     $("r-map-all").ontoggle = () => { if ($("r-map-all").open) table(); };
     if ($("r-map-all").open) table();
   }
@@ -223,7 +307,7 @@ async function boot() {
     };
     if (!pctFig) pctFig = figure($("r-pct-fig"), pctUpdate);
     else pctFig.update(pctUpdate);
-    paintMap(adjusted, place?.town).catch(console.error);
+    paintArea(adjusted).catch(console.error);
 
     const lead = h("p", {}, "Based on the classification of the Philippine Institute for Development Studies, your income places you in the ", h("strong", { text: cls.name.toLowerCase() }), " class.");
     para($("r-class-text"), lead, `${you} is ${times(mult)} times the poverty line for ${unit}, which is ${fmt.pesoExact(line)} per month in ${P.label} prices.`);

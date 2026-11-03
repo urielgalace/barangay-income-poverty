@@ -23,17 +23,17 @@
       <div class="prose" id="r-pct-text"></div>
       <div id="r-pct-fig"></div>
     </section>
-    <section class="block">
-      <header><h2>Across the country</h2></header>
+    <section class="block" id="r-area" hidden>
+      <header><h2>In your area</h2></header>
       <div class="two calc-map">
         <div class="plate">
-          <div class="plate-head"><div class="plate-title">Your percentile by city and municipality</div></div>
-          <div class="plate-map" id="r-map"><p class="small" style="color:var(--sea-ink-2)">Loading the map…</p></div>
+          <div class="plate-head"><div class="plate-title" id="r-area-title"></div></div>
+          <div class="plate-map" id="r-map"></div>
           <div class="scale" id="r-scale"></div>
         </div>
         <div class="calc-map-side">
           <div class="prose" id="r-map-text"></div>
-          <details id="r-map-all"><summary>All cities and municipalities</summary><div class="tv"><table id="r-map-table"></table></div></details>
+          <details id="r-map-all"><summary id="r-map-all-label">All barangays</summary><div class="tv"><table id="r-map-table"></table></div></details>
         </div>
       </div>
     </section>
