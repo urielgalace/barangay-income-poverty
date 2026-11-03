@@ -304,17 +304,15 @@ async function boot() {
     const near = me && me.lon != null ? nearest(me, ranked.filter((u) => u !== me && u.lon != null)) : [];
     const self = me ? me.name : p.short;
     const selfV = me ? me.v : null;
-    const isRegion = spec.level === "reg";
     const lead = "After adjusting for household size, your income would place you";
     const pair = near.length === 2 ? `${placeAt(near[0].v)} in ${near[0].name} and ${phrase(near[1].v)} in ${near[1].name}` : near.length ? `${placeAt(near[0].v)} in ${near[0].name}` : null;
-    const intro = isRegion ? "By comparison," : near.length === 2 ? `In the two nearest ${area.word},` : `In the nearest ${area.one},`;
     const all = (test) => near.length === 2 && selfV != null && [selfV, ...near.map((x) => x.v)].every((v) => test(Math.round(v)));
     const both = near.length === 2 ? `${near[0].name} and ${near[1].name}` : "";
     const first = selfV == null
-      ? (pair ? `In the ${near.length === 2 ? `two nearest ${area.word}` : `nearest ${area.one}`} to ${self}, your income, adjusted for household size, would place you ${pair}.` : "There are no income estimates for this area.")
-      : all((r) => r > 99) ? (isRegion ? `${lead} above the 99th percentile in ${self}, as well as in ${both}.` : `${lead} above the 99th percentile in ${self} and in the two nearest ${area.word}, ${both}.`)
-        : all((r) => r < 1) ? (isRegion ? `${lead} below the 1st percentile in ${self}, as well as in ${both}.` : `${lead} below the 1st percentile in ${self} and in the two nearest ${area.word}, ${both}.`)
-          : `${lead} ${placeAt(selfV)} in ${self}.${pair ? ` ${intro} it would place you ${pair}.` : ""}`;
+      ? (pair ? `There is no income estimate for ${self}. By comparison, your income, adjusted for household size, would place you ${pair}.` : "There are no income estimates for this area.")
+      : all((r) => r > 99) ? `${lead} above the 99th percentile in ${self}, as well as in ${both}.`
+        : all((r) => r < 1) ? `${lead} below the 1st percentile in ${self}, as well as in ${both}.`
+          : `${lead} ${placeAt(selfV)} in ${self}.${pair ? ` By comparison, it would place you ${pair}.` : ""}`;
     para($("r-map-text"), first,
       count > 1 && above === count ? `With the same income, adjusted for household size, you would be above the 99th percentile in every one of the ${area.word} in ${area.where}.` : null,
       count > 1 && below === count ? `With the same income, adjusted for household size, you would be below the 1st percentile in every one of the ${area.word} in ${area.where}.` : null,
