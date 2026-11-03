@@ -49,7 +49,7 @@
   </section>
 
   <section class="block" id="models">
-    <header><h2>The machine learning models</h2><p class="small">Two models are used to produce barangay-level estimates, one for household income and another for poverty. They are developed separately because the available training data differ. Income statistics are published primarily for larger geographic areas, while poverty has been measured at the barangay level in selected parts of the country.</p></header>
+    <header><h2>Estimating income and poverty using machine learning</h2><p class="small">Two models are used to produce barangay-level estimates, one for household income and another for poverty. They are developed separately because the available training data differ. Income statistics are published primarily for larger geographic areas, while poverty has been measured at the barangay level in selected parts of the country.</p></header>
     <div class="tv flat"><table>
       <thead><tr><th scope="col"></th><th scope="col"><span class="key dot c-income"></span> Household income model</th><th scope="col"><span class="key dot c-poverty"></span> Poverty model</th></tr></thead>
       <tbody>
@@ -62,7 +62,7 @@
     </table></div>
 
     <div class="sub">
-      <h3>What the models use</h3>
+      <h3>Data used to train the models</h3>
       <div class="prose">
         <p>Both models use 99 measures describing each geographic area. Most are derived from satellite imagery, while the remainder come from maps and the 2024 census.</p>
         <p><strong>Nighttime lights (4 measures).</strong> These capture nighttime brightness, including brightness relative to population and built-up area, which can indicate electrification and economic activity.</p>
@@ -72,14 +72,13 @@
         <p><strong>Terrain and accessibility (4 measures).</strong> These include elevation, slope, and travel times to the nearest city and health facility, which help capture geographic isolation.</p>
         <p><strong>Population and census characteristics (7 measures).</strong> These include population density, household size, urban or rural classification, the proportion of people living outside households, and crowding.</p>
         <p>To assess the relative importance of these inputs, each group of variables is randomly rearranged in data excluded from training, and the resulting reduction in predictive performance is measured. Larger reductions indicate that the model relies more heavily on that group.</p>
-        <p>Because the variables contain overlapping information, the importance of individual groups may be understated when other variables can substitute for them.</p>
         <p>For the poverty model, building and settlement characteristics contribute most to predicting differences within municipalities. For the income model, which is trained on provinces and cities, the most important inputs are land cover and temperature, estimated poverty rates, and AlphaEarth embeddings.</p>
       </div>
       <div class="two"><div id="importance-income"></div><div id="importance-poverty"></div></div>
     </div>
 
     <div class="sub">
-      <h3>How the algorithms work</h3>
+      <h3>How the machine learning algorithms work</h3>
       <div class="prose">
         <p><strong>Gradient boosting.</strong> A decision tree generates predictions by applying a sequence of yes-or-no rules, such as whether a barangay has brighter nighttime lighting than its municipal average. Gradient boosting combines many small decision trees, with each successive tree attempting to correct errors made by the preceding ones. The final prediction combines their contributions.</p>
         <p>This approach allows the model to identify nonlinear relationships and interactions among variables that may not be captured by simpler methods. The poverty model uses 300 trees, while the income model uses 200.</p>
@@ -89,7 +88,7 @@
     </div>
 
     <div class="sub">
-      <h3>The household income model</h3>
+      <h3>Estimating household income</h3>
       <div class="prose">
         <p>The FIES publishes average annual family income for provinces and selected cities, but not for individual barangays. Consequently, the income model is trained using data from larger geographic areas.</p>
         <p>This site reports these figures as household income per month, dividing the annual figure by 12. A household can include more than one family, so the two measures differ slightly.</p>
@@ -104,7 +103,7 @@
     </div>
 
     <div class="sub">
-      <h3>The poverty model</h3>
+      <h3>Estimating poverty</h3>
       <div class="prose">
         <p>The available barangay-level poverty data come from published reports of the Community-Based Monitoring System (CBMS), which collected information through door-to-door household surveys.</p>
         <p>The {{ method.poverty.reports }} reports cover {{ method.poverty.n|num }} barangays. However, they were conducted between {{ method.coverage.year_min }} and {{ method.coverage.year_max }} and used different local poverty thresholds. Consequently, their reported poverty levels are not directly comparable across surveys or with current official figures.</p>
@@ -116,7 +115,7 @@
     </div>
 
     <div class="sub">
-      <h3>Matching the official figures</h3>
+      <h3>Benchmarking the estimates against official figures</h3>
       <div class="prose">
         <p>The models initially produce estimates based on the relationships identified during training. These estimates are then adjusted to ensure consistency with official figures for larger geographic areas.</p>
         <p>The adjustment preserves the relative ordering of barangays within each area while changing their overall levels.</p>
@@ -169,7 +168,7 @@
   </section>
 
   <section class="block" id="tests">
-    <header><h2>How the models were tested</h2><p class="small">Models can appear accurate when evaluated using the same data on which they were trained. To assess their ability to predict outcomes in areas not used during training, all reported performance measures are calculated using held-out data.</p><p class="small">For the household income model, each province and its constituent cities were excluded from training together. For the poverty model, each of the {{ method.poverty.reports }} survey reports was excluded in turn.</p></header>
+    <header><h2>Model validation and performance</h2><p class="small">Models can appear accurate when evaluated using the same data on which they were trained. To assess their ability to predict outcomes in areas not used during training, all reported performance measures are calculated using held-out data.</p><p class="small">For the household income model, each province and its constituent cities were excluded from training together. For the poverty model, each of the {{ method.poverty.reports }} survey reports was excluded in turn.</p></header>
     <div class="sub">
       <h3>Performance measures</h3>
       <dl class="stats quad">
@@ -189,19 +188,17 @@
       <p>Two additional tests provide supporting evidence.</p>
       <p>First, when a province and its cities are excluded from training, the income model is able to estimate income differences between cities and the rest of their province, achieving a correlation of {{ "%.2f"|format(method.income.gap_corr) }}. Its typical prediction error is approximately {{ "%.0f"|format(method.income.gap_ratio * 100) }}% of the error obtained by assuming that no income difference exists.</p>
       <p>Second, the poverty model’s predictions are compared with the PSA’s small-area estimates in {{ method.poverty.cross_provinces }} provinces that did not contribute training surveys. The resulting rank correlation is {{ "%.2f"|format(method.poverty.cross_rho) }}.</p>
-      <p>However, because the PSA’s small-area estimates rely partly on similar explanatory variables, this comparison provides supporting evidence rather than an entirely independent validation.</p>
       <h3>Limitations of the tests</h3>
       <ul>
         <li><strong>The survey data are dated and geographically incomplete.</strong> They cover {{ "%.0f"|format(method.coverage.people) }}% of the national population across {{ method.coverage.regions }} of {{ method.coverage.regions_total }} regions. Moreover, {{ "%.0f"|format(method.coverage.early) }}% of surveyed barangays come from reports initiated by 2008. Consequently, the model’s accuracy for 2025 cannot be evaluated directly.</li>
         <li><strong>Barangay income estimates cannot be validated directly.</strong> No observed barangay-level income data are available for comparison.</li>
         <li><strong>The models tend to underestimate income in wealthy, low-density neighborhoods.</strong> For example, Forbes Park is ranked {{ method.forbes.rank }}th out of {{ method.forbes.of }} barangays in Makati in estimated income.</li>
       </ul>
-      <p>A separate validation script reproduces the published figures from the original data files and distinguishes between what each test can and cannot establish.</p>
     </div>
   </section>
 
   <section class="block" id="collection">
-    <header><h2>How the data were collected</h2><p class="small">The following sections document the procedures used to obtain and prepare the underlying data. Most data were collected on October 30, 2026, with additional collection conducted in June and July. The <a href="versions.html">version history</a> documents the relevant dates.</p></header>
+    <header><h2>Data collection</h2><p class="small">The following sections document the procedures used to obtain and prepare the underlying data. Most data were collected on October 30, 2026, with additional collection conducted in June and July. The <a href="versions.html">version history</a> documents the relevant dates.</p></header>
     <div class="more">
       <details>
         <summary>Official statistics from the PSA</summary>
@@ -211,7 +208,7 @@
         </div>
       </details>
       <details>
-        <summary>The 2024 census from OpenSTAT</summary>
+        <summary>2024 census from OpenSTAT</summary>
         <div class="inner">
           <p>The PSA’s OpenSTAT database provides a publicly accessible PXWeb API, allowing census data to be retrieved programmatically.</p>
           <p>One request per region was used to obtain barangay-level population, household population, and household counts.</p>
@@ -222,7 +219,7 @@
       <details>
         <summary>Current geography from the PSGC</summary>
         <div class="inner">
-          <p>The third-quarter 2026 Philippine Standard Geographic Code (PSGC) identifies {{ meta.barangays|num }} barangays and {{ meta.lgus|num }} cities and municipalities.</p>
+          <p>The third quarter 2026 Philippine Standard Geographic Code (PSGC) identifies {{ meta.barangays|num }} barangays and {{ meta.lgus|num }} cities and municipalities.</p>
           <p>The PSA’s <em>Summary of Changes</em> documents geographic revisions, including mergers, newly established barangays, and name changes. Since the available boundary files were produced, 19 barangay mergers and five new barangays have been recorded.</p>
         </div>
       </details>
@@ -290,7 +287,7 @@
   </section>
 
   <section class="block" id="sources">
-    <header><h2>Data sources</h2><p class="small">Each source file is documented with its date of inclusion and SHA-256 checksum, allowing users to verify that they are working with the same files used in the project.</p><p class="small">Original source files are not redistributed.</p></header>
+    <header><h2>Data sources</h2><p class="small">Each source file is documented with its date of inclusion and SHA-256 checksum, allowing users to verify that they are working with the same files used in the project.</p></header>
     <div>
     {% for g in sources %}
       <div class="src">
