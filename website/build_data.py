@@ -23,6 +23,7 @@ Also writes validation.json and sources.json to website/.cache/, for the methodo
 from __future__ import annotations
 import glob
 import hashlib
+import io
 import json
 import re
 import shutil
@@ -31,6 +32,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import PchipInterpolator
+from scipy.optimize import minimize
+from scipy.special import betainc, gammaln
 from scipy.stats import spearmanr
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +83,11 @@ def area_key(n):
     n = re.sub(r"^CAR\s*-\s*", "", str(n).strip())
     kind = classify(n)
     return kind, canon(kind, norm_area(n))
+
+
+def area_item_key(level, name):
+    """Series key of a province-level area. Isabela and Cotabato are each both a province and a city with official figures."""
+    return f"a:{norm_area(name)}{' city' if level == 'city' else ''}"
 
 
 def monthly(k):
@@ -381,12 +390,13 @@ def write_series(lgus, areas, regions):
         add_official(rec, kind, key)
         if kind == "province" and key in xhuc:
             rec["note"] = "PSA's poverty figures for this province include its highly urbanized cities. FIES income and spending figures leave them out."
-        items[f"a:{key}"] = rec
+        items[area_item_key(kind, r.id)] = rec
+    parent_key = {r.id: area_item_key(r.level, r.id) for r in areas.itertuples()}
     sae_by = {k: s.sort_values("year") for k, s in sae.groupby("corr6")}
     am = amap.set_index("city_psgc")
     for r in lgus.itertuples():
         a = am.loc[r.id]
-        rec = {"name": r.name, "type": "lgu", "prov": r.prov, "reg": r.reg, "est": clean(r.p, 2), "esti": clean(r.i, 0), "parent": f"a:{norm_area(r.parent)}" if isinstance(r.parent, str) else None}
+        rec = {"name": r.name, "type": "lgu", "prov": r.prov, "reg": r.reg, "est": clean(r.p, 2), "esti": clean(r.i, 0), "parent": parent_key.get(r.parent, f"a:{norm_area(r.parent)}")}
         own = (a.city_class in ("HUC", "ICC") or r.name in ("Pateros", "City of Isabela")) and len(poverty_of("city", a.city_key)) > 0
         if own:
             add_official(rec, "city", a.city_key)
@@ -772,6 +782,157 @@ def write_sources():
     dump("sources.json", rows, folder=CACHE)
 
 
+# ------------------------------------------------------------------------------------------------- income calculator
+# FIES ranks families by income per person but reports their average family income, so comparing a person's income with it
+# takes the size of the families in each income group. These pairs give the share of families and the share of people below
+# the same point: official poverty among families and among the population in 2025, 2023, 2021 and 2018...
+POOR_FAMILIES_PEOPLE = [(6.4, 9.7), (10.9, 15.5), (13.2, 18.1), (12.1, 16.7)]
+# ...and PIDS's counts of families and persons (millions) in each income class in 2018 (Albert et al. 2020, slide 17).
+PIDS_2018_FAMILIES = [2.9, 8.4, 7.6, 3.1, 1.2, .358, .143]
+PIDS_2018_PERSONS = [17.7, 40.7, 31.0, 11.2, 3.8, 1.0, .36]
+
+
+def person_bands():
+    """Each family decile's share of people, as cumulative edges from 0 to 1."""
+    fam, per = np.cumsum(PIDS_2018_FAMILIES) / sum(PIDS_2018_FAMILIES) * 100, np.cumsum(PIDS_2018_PERSONS) / sum(PIDS_2018_PERSONS) * 100
+    pairs = sorted([(0, 0), (100, 100), *POOR_FAMILIES_PEOPLE, *zip(fam[1:6], per[1:6])])
+    return PchipInterpolator(*zip(*pairs))(np.arange(0, 101, 10.)) / 100
+
+
+def share_below(y, a, b, p):
+    """The Dagum curve: the share of people with income per person below y."""
+    return np.exp(-p * np.log1p((y / b) ** -a))
+
+
+def fit_income_curve(means, edges, anchor=None):
+    """Dagum curve matching the average income per person in each band of people and, softly, an official poverty rate."""
+    width = np.diff(edges)
+
+    def band_means(a, b, p):
+        mean = b * np.exp(gammaln(p + 1 / a) + gammaln(1 - 1 / a) - gammaln(p))
+        return mean * np.diff(betainc(p + 1 / a, 1 - 1 / a, edges ** (1 / p))) / width
+
+    def loss(theta):
+        a, b, p = np.exp(theta)
+        if not (1.3 < a < 9 and .15 < p < 40):
+            return 1e6
+        err = (width * (np.log(band_means(a, b, p)) - np.log(means)) ** 2).sum()
+        if anchor:
+            err += .1 * (np.log(share_below(anchor[0], a, b, p)) - np.log(anchor[1])) ** 2
+        return err
+
+    starts = [(3, .8), (2.5, 1.4), (3.5, 3.)]
+    fits = [minimize(loss, [np.log(a0), np.log(np.median(means)), np.log(p0)], method="Nelder-Mead", options=dict(xatol=2e-3, fatol=1e-8, maxiter=1200)) for a0, p0 in starts]
+    return np.exp(min(fits, key=lambda r: r.fun).x)
+
+
+def survey_family_sizes():
+    """Average family size by area from FIES 2023 Table 10, counting families of seven or more as eight people."""
+    raw = (RAW / "openstat" / "fies2023_table10_family_size.csv").read_bytes().decode("latin-1").lstrip("ï»¿")
+    t = pd.read_csv(io.StringIO(raw))
+    t.columns = ["area", "size", "total", "average", "x", "y"]
+    size = dict(zip(["One person", "Two persons", "Three persons", "Four persons", "Five persons", "Six persons", "Seven persons or more"], [1, 2, 3, 4, 5, 6, 8]))
+    t = t[t["size"].isin(size)]
+    t["families"] = (pd.to_numeric(t.total, errors="coerce") / pd.to_numeric(t.average, errors="coerce")).fillna(0)
+    t["people"] = t.families * t["size"].map(size)
+    g = t.groupby("area", sort=False)[["families", "people"]].sum()
+    out = {}
+    for name, r in g.iterrows():
+        name = re.sub(r"\d/$", "", str(name).strip().lstrip(".").strip())
+        out["ph" if name == "PHILIPPINES" else area_key(name)] = r.people / r.families
+    return out
+
+
+def write_calculator(lgus, areas, regions, items, meta):
+    edges = person_bands()
+    size_share = np.diff(edges) * 10        # a decile's average family size, relative to all families
+    # price index, all items: the latest month against the 2025 average
+    cpi = pd.read_csv(io.StringIO((RAW / "openstat" / "cpi_all_items_2018base_2025_2026.csv").read_bytes().decode("utf-8-sig"))).iloc[0]
+    cpi = {k: float(v) for k, v in cpi.items() if k[:4].isdigit() and v != ".."}
+    latest = [k for k in cpi if k.startswith("2026")][-1]
+    factor = cpi[latest] / cpi["2025 Ave"]
+    prices = pd.Timestamp(f"{latest[5:]} {latest[:4]}").strftime("%B %Y")
+    line = meta["line_per_person"] / 12
+
+    # average family size: PSA's population base over FIES families nationally, and census and survey sizes for the differences between areas
+    t = pd.read_excel(FIES1, header=None)
+    fam = t[t[1].astype(str).str.strip() == "Philippines"].iloc[0]
+    poor = {r[0]: r[1] for r in items["ph"]["poor"]}
+    rate = {r[0]: r[1] for r in items["ph"]["pov"]}
+    national_size = {y: poor[y] / rate[y] * 100 / num(fam[c]) for y, c in ((2023, 3), (2025, 4))}
+    national_size[2018] = sum(PIDS_2018_PERSONS) / sum(PIDS_2018_FAMILIES)
+    survey = survey_family_sizes()
+    census_nat = meta["population"] / meta["households"]
+    census = {"ph": census_nat}
+    census.update({f"r:{canon('region', norm_area(r.name))}": r.pop / r.hh for r in regions.itertuples()})
+    census.update({area_item_key(r.level, r.id): r.pop / r.hh for r in areas.itertuples() if r.hh > 0})
+    census.update({f"m:{r.id}": r.pop / r.hh for r in lgus.itertuples() if r.hh > 0})
+    ids = {"ph": "ph"}
+    ids.update({f"r:{canon('region', norm_area(r.name))}": r.short for r in regions.itertuples()})
+    ids.update({area_item_key(r.level, r.id): r.id for r in areas.itertuples()})
+    ids.update({f"m:{r.id}": r.id for r in lgus.itertuples()})
+
+    dist, tests = [], []
+    for k, it in items.items():
+        if "dec" not in it:
+            continue
+        m = np.array([r[2] for r in it["dec"]], dtype=float)
+        s = survey.get("ph" if k == "ph" else area_key(it["name"]))
+        relative = census[k] / census_nat * (s / survey["ph"] if s else census[k] / census_nat)
+        means = m / (national_size[2025] * relative ** .5 * size_share)
+        pov = {r[0]: r[1] for r in it.get("pov", [])}.get(2025)
+        ann = dict(it.get("line") or []).get(2025)
+        anchor = (ann / 12, pov / 100) if pov and ann else None
+        a, b, p = fit_income_curve(means, edges, anchor)
+        dist.append(dict(id=ids[k], a=round(float(a), 4), b=round(float(b), 1), p=round(float(p), 4), i=round(float(m.mean())), z=round(float(census[k]), 3)))
+        if anchor:
+            tests.append(dict(key=k, type=it["type"], official=pov, fit=100 * float(share_below(ann / 12, *fit_income_curve(means, edges)))))
+    tests = pd.DataFrame(tests)
+    err = (tests.fit - tests.official).abs()
+    ph = {d["id"]: d for d in dist}["ph"]
+
+    # the same method on 2023 and 2018, where nothing was tuned to the poverty line, and against PIDS's class shares for 2018
+    t1 = pd.read_excel(glob.glob(str(RAW / "Table 1. 2018*"))[0], header=None)
+    m18 = t1[t1[0].astype(str).str.strip() == "PHILIPPINES"].iloc[0, 2:12].to_numpy(float) * 1000 / 12
+    m23 = np.array([r[1] for r in items["ph"]["dec"]], dtype=float)
+    fit18 = fit_income_curve(m18 / (national_size[2018] * size_share), edges)
+    fit23 = fit_income_curve(m23 / (national_size[2023] * size_share), edges)
+    lines = dict(items["ph"]["line"])
+    multiples = [c[1] for c in K.PIDS_CLASSES[1:]]
+    pids_fit = np.diff([0, *(100 * share_below(lines[2018] / 12 * x, *fit18) for x in multiples), 100])
+    pids_pub = np.array(PIDS_2018_PERSONS) / sum(PIDS_2018_PERSONS) * 100
+    ph_test = tests[tests.key == "ph"].fit.iloc[0]
+    check = dict(
+        n=len(tests), mae=round(float(err.mean()), 1), mae_region=round(float(err[tests.type == "region"].mean()), 1), mae_province=round(float(err[tests.type == "province"].mean()), 1),
+        corr=round(float(np.corrcoef(tests.fit, tests.official)[0, 1]), 2), ph_2025=round(float(ph_test), 1), ph_2023=round(float(100 * share_below(lines[2023] / 12, *fit23)), 1),
+        ph_2018=round(float(100 * share_below(lines[2018] / 12, *fit18)), 1), pids_fit=[round(float(v), 2) for v in pids_fit], pids_published=[round(float(v), 2) for v in pids_pub],
+        pids_max_gap=round(float(np.abs(pids_fit - pids_pub).max()), 1))
+
+    index = {d["id"]: i for i, d in enumerate(dist)}
+    region_of = {r.short: index[r.short] for r in regions.itertuples()}
+    key_id = {area_item_key(r.level, r.id): r.id for r in areas.itertuples()}
+    parent_key = {r.id: area_item_key(r.level, r.id) for r in areas.itertuples()}
+    prov = {r.id: index.get(r.id, region_of[r.reg]) for r in areas.itertuples()}
+    lgu = {}
+    for r in lgus.itertuples():
+        up = key_id.get(parent_key.get(r.parent))
+        lgu[r.id] = index.get(r.id, index.get(up, region_of[r.reg]))
+    classes = []
+    for name, lo, hi in K.PIDS_CLASSES:
+        below = lambda x: 100 * float(share_below(line * x, ph["a"], ph["b"], ph["p"])) if x else 0.
+        classes.append(dict(name=name, lo=lo, hi=hi, share=round((below(hi) if hi else 100.) - below(lo), 2)))
+    per_month = lambda d: round(d * K.IBON_DAYS / 12)
+    wage = {"ph": dict(flw=K.IBON_NATIONAL["flw_month"], mw=K.IBON_NATIONAL["mw_month"], label="the Philippines")}
+    for short, (label, mw, flw) in K.IBON_WAGES.items():
+        wage[short] = dict(flw=per_month(flw) if flw else None, mw=per_month(mw), label=label)
+    dump("calculator.json", dict(
+        prices=prices, cpi_pct=round((factor - 1) * 100, 1), factor=round(factor, 5), line=round(line, 2), line_now=round(line * factor), line_year=meta["line_per_person"],
+        line_now_family5=round(line * factor) * 5, classes=classes, wage=wage, negros=K.IBON_NEGROS, ibon_as_of=K.IBON_AS_OF, dist=dist, reg=region_of, prov=prov, lgu=lgu, check=check))
+    print("calculator:", {k: check[k] for k in ("n", "mae", "mae_region", "mae_province", "corr", "ph_2025", "ph_2023", "ph_2018", "pids_max_gap")})
+    print("  PIDS 2018 class shares, fitted", check["pids_fit"], "published", check["pids_published"])
+    print("  2025 class shares", [c["share"] for c in classes], "curve", {k: ph[k] for k in "abp"}, "share of people below the line", round(100 * float(share_below(line, ph["a"], ph["b"], ph["p"])), 1))
+
+
 def main():
     d, e = load_current()
     lgus = write_lgus(d, e)
@@ -785,6 +946,7 @@ def main():
     logs = write_validation(d)
     write_versions(d)
     write_methodology(e)
+    write_calculator(lgus, areas, regions, items, meta)
     write_sources()
     print({k: meta[k] for k in ("poverty", "poverty_lo", "poverty_hi", "poor_official_m", "income", "gini", "line_family5_month", "poverty_families")})
     print("smoothing:", logs["smoothing"])

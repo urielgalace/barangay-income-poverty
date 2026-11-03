@@ -128,7 +128,7 @@ main { padding-bottom: 56px; }
 .seg button:hover { background: var(--accent-wash); color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
 .seg button:disabled { opacity: .4; cursor: not-allowed; background: none; }
-select, input[type="search"], input[type="text"] { font: 400 var(--t-sm)/1.3 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-2); border-radius: 6px; padding: 8px 10px; max-width: 100%; }
+select, input[type="search"], input[type="text"], input[type="number"] { font: 400 var(--t-sm)/1.3 var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-2); border-radius: 6px; padding: 8px 10px; max-width: 100%; }
 input[type="search"]::placeholder { color: var(--ink-3); }
 .btn { display: inline-flex; align-items: center; gap: 6px; font: 600 var(--t-sm)/1.2 var(--body); text-decoration: none; border-radius: 6px; padding: 10px 15px; border: 1px solid var(--ink); background: var(--ink); color: var(--on-ink); cursor: pointer; }
 .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--on-ink); }
@@ -368,3 +368,18 @@ details[open] > summary { margin-bottom: 10px; }
 .prose h3 { margin-top: .5em; }
 .prose h3:first-child { margin-top: 0; }
 .prose h3 + p { margin-top: -.45em; }
+
+/* ---- income calculator ---- */
+.calc-form { display: grid; gap: 16px; }
+.calc-form .filters { gap: 14px 22px; }
+.calc-form .field { font-size: var(--t-sm); }
+#c-income { width: 200px; font-size: var(--t-md); padding: 9px 12px; }
+#c-size { width: 90px; }
+.calc-form .combo { max-width: 560px; }
+.calc-msg { color: var(--del); }
+.calc-msg:empty { display: none; }
+.stat dd.word { font-size: 1.3rem; line-height: 1.2; }
+.ladder th { white-space: normal; }
+.ladder tr[aria-current="true"] td { background: var(--accent-wash); font-weight: 700; }
+.you { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--ink); color: var(--on-ink); font-size: var(--t-xs); font-weight: 600; white-space: nowrap; }
+@media (max-width: 560px) { .ladder th, .ladder td { padding: 7px 6px; } .ladder .times { display: none; } }

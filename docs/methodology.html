@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-build="37970f11b8">
+<html lang="en" data-build="fe9574329e">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/site.css?b=37970f11b8">
+<link rel="stylesheet" href="assets/site.css?b=fe9574329e">
 <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
 
 </head>
@@ -32,6 +32,7 @@
         <a href="map.html">Map</a>
         <a href="trends.html">Trends</a>
         <a href="statistics.html">Statistics</a>
+        <a href="calculator.html">Calculator</a>
         <a href="methodology.html" aria-current="page">Methodology</a>
         <a href="versions.html">Version History</a>
         <a href="about.html">About</a>
@@ -63,29 +64,25 @@
     <header><h2>Overview of the methodology</h2></header>
     <ol class="approach">
       <li><b>Start with official figures</b><span>The PSA’s published income and poverty figures provide the basis for each region and province.</span></li>
-      <li><b>Train the models</b><span>Machine learning models identify how satellite imagery and census characteristics are associated with income and poverty in areas for which these figures are available.</span></li>
+      <li><b>Train the models</b><span>Machine learning models identify how satellite imagery and census characteristics are associated with income and poverty in these areas.</span></li>
       <li><b>Estimate every barangay</b><span>The models apply these relationships to each barangay’s satellite imagery and census data to estimate how its income and poverty levels compare with those of other areas.</span></li>
-      <li><b>Match the official figures</b><span>The estimates are adjusted to align with official figures for larger geographic areas, and each estimate is assigned a margin of error.</span></li>
+      <li><b>Match the official figures</b><span>The estimates are adjusted to align with official figures, and each estimate is assigned a margin of error.</span></li>
     </ol>
-    <div class="prose">
-      <p>This approach builds on the observation that barangays within the same municipality can differ substantially in their physical characteristics. For example, one barangay may have densely populated residential areas and relatively bright nighttime lighting, while another may have scattered households and limited lighting. These differences can reflect differences in living standards. Using data from barangays where poverty has been measured through household surveys, the model identifies these relationships and applies them to barangays without survey data.</p>
-      <p>Importantly, the models do not determine overall income or poverty levels for provinces. These are established by official statistics. Instead, the models estimate how income and poverty are distributed across barangays within each area.</p>
-    </div>
   </section>
 
   <section class="block" id="levels">
-    <header><h2>Where each figure comes from</h2></header>
+    <header><h2>Sources of the estimates</h2></header>
     <div class="tv flat"><table>
       <thead><tr><th scope="col">Level</th><th scope="col">Household income</th><th scope="col">Poverty</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Region</th><td>Official 2025 figures from the Family Income and Expenditure Survey (FIES).</td><td>Official 2025 poverty estimates, reproduced without adjustment.</td></tr>
+        <tr><th scope="row">Region</th><td>Official 2025 data from the Family Income and Expenditure Survey (FIES).</td><td>Official 2025 poverty estimates, reproduced without adjustment.</td></tr>
         <tr><th scope="row">Province, NCR district, or city</th><td>Official 2025 FIES figures covering 82 provinces and 36 cities, reproduced without adjustment.</td><td>Official 2025 estimates adjusted through Fay-Herriot smoothing and re-benchmarked to regional totals.</td></tr>
         <tr><th scope="row">City or municipality</th><td>Household-weighted averages of barangay-level estimates.</td><td>The PSA’s 2023 small-area estimates, adjusted to match provincial poverty levels in 2025.</td></tr>
-        <tr><th scope="row">Barangay</th><td><strong>Machine learning estimates</strong> adjusted to match official FIES figures for the corresponding province or city.</td><td><strong>Machine learning estimates</strong> adjusted to match poverty figures for the corresponding city or municipality.</td></tr>
+        <tr><th scope="row">Barangay</th><td><strong>Machine learning estimates</strong> adjusted to match official FIES data for the corresponding province or city.</td><td><strong>Machine learning estimates</strong> adjusted to match poverty data for the corresponding city or municipality.</td></tr>
       </tbody>
     </table></div>
     <details>
-      <summary>How the official figures are prepared</summary>
+      <summary>How the data are processed</summary>
       <div class="prose">
         <p><strong>Household income.</strong> Table 3 of the FIES reports coefficients of variation with a median of 3.9% and a maximum of 14.7% in Samar. All income figures are retained as published.</p>
         <p><strong>Provincial poverty.</strong> The PSA reports poverty rates below 0.05% for four provinces in 2025: Ilocos Norte, Aklan, Nueva Ecija, and Zamboanga Sibugay. However, the latter two provinces recorded substantially higher rates in 2023, at 10.2% and 24.2%, respectively.</p>
@@ -98,7 +95,7 @@
   </section>
 
   <section class="block" id="models">
-    <header><h2>The machine learning models</h2><p class="small">Two models are used to produce barangay-level estimates, one for household income and another for poverty. They are developed separately because the available training data differ. Income statistics are published primarily for larger geographic areas, while poverty has been measured at the barangay level in selected parts of the country.</p></header>
+    <header><h2>Estimating income and poverty using machine learning</h2><p class="small">Two models are used to produce barangay-level estimates, one for household income and another for poverty. They are developed separately because the available training data differ. Income statistics are published primarily for larger geographic areas, while poverty has been measured at the barangay level in selected parts of the country.</p></header>
     <div class="tv flat"><table>
       <thead><tr><th scope="col"></th><th scope="col"><span class="key dot c-income"></span> Household income model</th><th scope="col"><span class="key dot c-poverty"></span> Poverty model</th></tr></thead>
       <tbody>
@@ -111,7 +108,7 @@
     </table></div>
 
     <div class="sub">
-      <h3>What the models use</h3>
+      <h3>Data used to train the models</h3>
       <div class="prose">
         <p>Both models use 99 measures describing each geographic area. Most are derived from satellite imagery, while the remainder come from maps and the 2024 census.</p>
         <p><strong>Nighttime lights (4 measures).</strong> These capture nighttime brightness, including brightness relative to population and built-up area, which can indicate electrification and economic activity.</p>
@@ -121,14 +118,13 @@
         <p><strong>Terrain and accessibility (4 measures).</strong> These include elevation, slope, and travel times to the nearest city and health facility, which help capture geographic isolation.</p>
         <p><strong>Population and census characteristics (7 measures).</strong> These include population density, household size, urban or rural classification, the proportion of people living outside households, and crowding.</p>
         <p>To assess the relative importance of these inputs, each group of variables is randomly rearranged in data excluded from training, and the resulting reduction in predictive performance is measured. Larger reductions indicate that the model relies more heavily on that group.</p>
-        <p>Because the variables contain overlapping information, the importance of individual groups may be understated when other variables can substitute for them.</p>
         <p>For the poverty model, building and settlement characteristics contribute most to predicting differences within municipalities. For the income model, which is trained on provinces and cities, the most important inputs are land cover and temperature, estimated poverty rates, and AlphaEarth embeddings.</p>
       </div>
       <div class="two"><div id="importance-income"></div><div id="importance-poverty"></div></div>
     </div>
 
     <div class="sub">
-      <h3>How the algorithms work</h3>
+      <h3>How the machine learning algorithms work</h3>
       <div class="prose">
         <p><strong>Gradient boosting.</strong> A decision tree generates predictions by applying a sequence of yes-or-no rules, such as whether a barangay has brighter nighttime lighting than its municipal average. Gradient boosting combines many small decision trees, with each successive tree attempting to correct errors made by the preceding ones. The final prediction combines their contributions.</p>
         <p>This approach allows the model to identify nonlinear relationships and interactions among variables that may not be captured by simpler methods. The poverty model uses 300 trees, while the income model uses 200.</p>
@@ -138,7 +134,7 @@
     </div>
 
     <div class="sub">
-      <h3>The household income model</h3>
+      <h3>Estimating household income</h3>
       <div class="prose">
         <p>The FIES publishes average annual family income for provinces and selected cities, but not for individual barangays. Consequently, the income model is trained using data from larger geographic areas.</p>
         <p>This site reports these figures as household income per month, dividing the annual figure by 12. A household can include more than one family, so the two measures differ slightly.</p>
@@ -153,7 +149,7 @@
     </div>
 
     <div class="sub">
-      <h3>The poverty model</h3>
+      <h3>Estimating poverty</h3>
       <div class="prose">
         <p>The available barangay-level poverty data come from published reports of the Community-Based Monitoring System (CBMS), which collected information through door-to-door household surveys.</p>
         <p>The 25 reports cover 6,618 barangays. However, they were conducted between 2005 and 2018 and used different local poverty thresholds. Consequently, their reported poverty levels are not directly comparable across surveys or with current official figures.</p>
@@ -165,7 +161,7 @@
     </div>
 
     <div class="sub">
-      <h3>Matching the official figures</h3>
+      <h3>Benchmarking the estimates against official figures</h3>
       <div class="prose">
         <p>The models initially produce estimates based on the relationships identified during training. These estimates are then adjusted to ensure consistency with official figures for larger geographic areas.</p>
         <p>The adjustment preserves the relative ordering of barangays within each area while changing their overall levels.</p>
@@ -218,7 +214,7 @@
   </section>
 
   <section class="block" id="tests">
-    <header><h2>How the models were tested</h2><p class="small">Models can appear accurate when evaluated using the same data on which they were trained. To assess their ability to predict outcomes in areas not used during training, all reported performance measures are calculated using held-out data.</p><p class="small">For the household income model, each province and its constituent cities were excluded from training together. For the poverty model, each of the 25 survey reports was excluded in turn.</p></header>
+    <header><h2>Model validation and performance</h2><p class="small">Models can appear accurate when evaluated using the same data on which they were trained. To assess their ability to predict outcomes in areas not used during training, all reported performance measures are calculated using held-out data.</p><p class="small">For the household income model, each province and its constituent cities were excluded from training together. For the poverty model, each of the 25 survey reports was excluded in turn.</p></header>
     <div class="sub">
       <h3>Performance measures</h3>
       <dl class="stats quad">
@@ -238,19 +234,17 @@
       <p>Two additional tests provide supporting evidence.</p>
       <p>First, when a province and its cities are excluded from training, the income model is able to estimate income differences between cities and the rest of their province, achieving a correlation of 0.53. Its typical prediction error is approximately 34% of the error obtained by assuming that no income difference exists.</p>
       <p>Second, the poverty model’s predictions are compared with the PSA’s small-area estimates in 59 provinces that did not contribute training surveys. The resulting rank correlation is 0.67.</p>
-      <p>However, because the PSA’s small-area estimates rely partly on similar explanatory variables, this comparison provides supporting evidence rather than an entirely independent validation.</p>
       <h3>Limitations of the tests</h3>
       <ul>
         <li><strong>The survey data are dated and geographically incomplete.</strong> They cover 13% of the national population across 11 of 18 regions. Moreover, 96% of surveyed barangays come from reports initiated by 2008. Consequently, the model’s accuracy for 2025 cannot be evaluated directly.</li>
         <li><strong>Barangay income estimates cannot be validated directly.</strong> No observed barangay-level income data are available for comparison.</li>
         <li><strong>The models tend to underestimate income in wealthy, low-density neighborhoods.</strong> For example, Forbes Park is ranked 20th out of 23 barangays in Makati in estimated income.</li>
       </ul>
-      <p>A separate validation script reproduces the published figures from the original data files and distinguishes between what each test can and cannot establish.</p>
     </div>
   </section>
 
   <section class="block" id="collection">
-    <header><h2>How the data were collected</h2><p class="small">The following sections document the procedures used to obtain and prepare the underlying data. Most data were collected on October 30, 2026, with additional collection conducted in June and July. The <a href="versions.html">version history</a> documents the relevant dates.</p></header>
+    <header><h2>Data collection</h2><p class="small">The following sections document the procedures used to obtain and prepare the underlying data. Most data were collected on October 30, 2026, with additional collection conducted in June and July. The <a href="versions.html">version history</a> documents the relevant dates.</p></header>
     <div class="more">
       <details>
         <summary>Official statistics from the PSA</summary>
@@ -260,7 +254,7 @@
         </div>
       </details>
       <details>
-        <summary>The 2024 census from OpenSTAT</summary>
+        <summary>2024 census from OpenSTAT</summary>
         <div class="inner">
           <p>The PSA’s OpenSTAT database provides a publicly accessible PXWeb API, allowing census data to be retrieved programmatically.</p>
           <p>One request per region was used to obtain barangay-level population, household population, and household counts.</p>
@@ -271,7 +265,7 @@
       <details>
         <summary>Current geography from the PSGC</summary>
         <div class="inner">
-          <p>The third-quarter 2026 Philippine Standard Geographic Code (PSGC) identifies 42,010 barangays and 1,642 cities and municipalities.</p>
+          <p>The third quarter 2026 Philippine Standard Geographic Code (PSGC) identifies 42,010 barangays and 1,642 cities and municipalities.</p>
           <p>The PSA’s <em>Summary of Changes</em> documents geographic revisions, including mergers, newly established barangays, and name changes. Since the available boundary files were produced, 19 barangay mergers and five new barangays have been recorded.</p>
         </div>
       </details>
@@ -339,13 +333,13 @@
   </section>
 
   <section class="block" id="sources">
-    <header><h2>Data sources</h2><p class="small">Each source file is documented with its date of inclusion and SHA-256 checksum, allowing users to verify that they are working with the same files used in the project.</p><p class="small">Original source files are not redistributed.</p></header>
+    <header><h2>Data sources</h2><p class="small">Each source file is documented with its date of inclusion and SHA-256 checksum, allowing users to verify that they are working with the same files used in the project.</p></header>
     <div>
     
       <div class="src">
         <h3>Official poverty statistics</h3>
-        <p class="small">Sets 2025 poverty levels for regions, provinces and NCR districts. Supplies the 2018 to 2025 trends, their confidence intervals, poverty lines and poor-population counts.</p>
-        <div class="chips"><span><a href="https://psa.gov.ph/statistics/poverty">Philippine Statistics Authority</a></span><span>psa.gov.ph, in a browser. The site&#39;s human check blocks scripts.</span><span>Official statistics, used with attribution</span></div>
+        <p class="small">Provides official 2025 poverty estimates for regions, provinces, and NCR districts, along with poverty trends from 2018 to 2025, confidence intervals, poverty thresholds, and estimates of the population living in poverty.</p>
+        <div class="chips"><span><a href="https://psa.gov.ph/statistics/poverty">Philippine Statistics Authority</a></span><span>psa.gov.ph, in a browser.</span><span>Official statistics, used with attribution</span></div>
         <details><summary>2 files</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
           <tbody><tr><td style="word-break:break-word">2025 Full Year Official Poverty Statistics_24Aug2026_0.xlsx</td><td class="nowrap">2026-10-30</td><td class="n">412 KB</td><td><span class="hash">ea80fe8d488bd082056d14bbfde5c39e744e11e5fc615a6dece2ed696eb8b4f8</span></td></tr><tr><td style="word-break:break-word">2023 Full Year Official Poverty Statistics_r2.xlsx</td><td class="nowrap">2026-06-05</td><td class="n">1.6 MB</td><td><span class="hash">fd374441fa8746f816758089010a00d9179970cea96348d68de021958345f44a</span></td></tr></tbody></table></div>
@@ -364,7 +358,7 @@
     
       <div class="src">
         <h3>Municipal small-area poverty estimates</h3>
-        <p class="small">Sets the pattern across municipalities inside each province. Latest round is 2023.</p>
+        <p class="small">Provides the distribution of poverty across municipalities within each province, based on the latest available estimates from 2023.</p>
         <div class="chips"><span><a href="https://psa.gov.ph/statistics/poverty-sae">Philippine Statistics Authority</a></span><span>psa.gov.ph, in a browser.</span><span>Official statistics, used with attribution</span></div>
         <details><summary>1 file</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
@@ -374,7 +368,7 @@
     
       <div class="src">
         <h3>2024 Census of Population and Housing</h3>
-        <p class="small">Population, households and urban or rural status for every barangay. All weights in the dataset.</p>
+        <p class="small">Population, households and urban or rural status for all barangays. All weights in the dataset.</p>
         <div class="chips"><span><a href="https://openstat.psa.gov.ph/">Philippine Statistics Authority</a></span><span>PSA OpenSTAT public API (PXWeb), one table per region.</span><span>Official statistics, used with attribution</span></div>
         <details><summary>20 files</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
@@ -384,17 +378,17 @@
     
       <div class="src">
         <h3>Poverty and FIES tables on OpenSTAT</h3>
-        <p class="small">Cross-checks on the official workbooks, and the 2018 poverty line.</p>
+        <p class="small">Cross-checks on the official workbooks, and the 2018 poverty line. For the income calculator, the consumer price index and family sizes from FIES 2023.</p>
         <div class="chips"><span><a href="https://openstat.psa.gov.ph/">Philippine Statistics Authority</a></span><span>PSA OpenSTAT public API (PXWeb).</span><span>Official statistics, used with attribution</span></div>
-        <details><summary>6 files</summary>
+        <details><summary>8 files</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
-          <tbody><tr><td style="word-break:break-word">fies2023_table12_median.csv</td><td class="nowrap">2026-10-30</td><td class="n">78 KB</td><td><span class="hash">6186c9918c8891ea3e19fbf706e3cedfc27a2d1ddc6088ffbec7dc80bf5ffd30</span></td></tr><tr><td style="word-break:break-word">fies2023_table1_mean.csv</td><td class="nowrap">2026-10-30</td><td class="n">6 KB</td><td><span class="hash">9a4781e5c546ce142cc10da2ed6ee069e285404f83845387db567c608fff5204</span></td></tr><tr><td style="word-break:break-word">fies2023_table5_gini.csv</td><td class="nowrap">2026-10-30</td><td class="n">4 KB</td><td><span class="hash">b1c6f9981e7a20f95542367ed73b1cb7c7ff5ba0115fc597d20283052f6cd697</span></td></tr><tr><td style="word-break:break-word">poverty_families_prov_huc_2018_2021_2023.csv</td><td class="nowrap">2026-10-30</td><td class="n">18 KB</td><td><span class="hash">afd04adba4b5542d51d86083171a3d96d2cc50bb64c06f984d2f733bac2d238e</span></td></tr><tr><td style="word-break:break-word">poverty_population_prov_2018_2021_2023.csv</td><td class="nowrap">2026-10-30</td><td class="n">12 KB</td><td><span class="hash">f0a2521f4fea36a54a5038990345a868f04acd5eebdf94d8aa279b605945482f</span></td></tr><tr><td style="word-break:break-word">poverty_population_prov_huc_2018_2021_2023.csv</td><td class="nowrap">2026-10-30</td><td class="n">14 KB</td><td><span class="hash">ac6c351f8a0c5382ede88554e40053e56f82c099ca62ad21e70386affd71e70e</span></td></tr></tbody></table></div>
+          <tbody><tr><td style="word-break:break-word">cpi_all_items_2018base_2025_2026.csv</td><td class="nowrap">2026-11-02</td><td class="n">1 KB</td><td><span class="hash">b52d0f242179a689f49b0c83946142f4578cbfc7940adb7911fd6ff463d50343</span></td></tr><tr><td style="word-break:break-word">fies2023_table10_family_size.csv</td><td class="nowrap">2026-11-02</td><td class="n">76 KB</td><td><span class="hash">e040bb08124162a6849af3ff85e98e7eab67592711571abfe06997bdb21cfeac</span></td></tr><tr><td style="word-break:break-word">fies2023_table12_median.csv</td><td class="nowrap">2026-10-30</td><td class="n">78 KB</td><td><span class="hash">6186c9918c8891ea3e19fbf706e3cedfc27a2d1ddc6088ffbec7dc80bf5ffd30</span></td></tr><tr><td style="word-break:break-word">fies2023_table1_mean.csv</td><td class="nowrap">2026-10-30</td><td class="n">6 KB</td><td><span class="hash">9a4781e5c546ce142cc10da2ed6ee069e285404f83845387db567c608fff5204</span></td></tr><tr><td style="word-break:break-word">fies2023_table5_gini.csv</td><td class="nowrap">2026-10-30</td><td class="n">4 KB</td><td><span class="hash">b1c6f9981e7a20f95542367ed73b1cb7c7ff5ba0115fc597d20283052f6cd697</span></td></tr><tr><td style="word-break:break-word">poverty_families_prov_huc_2018_2021_2023.csv</td><td class="nowrap">2026-10-30</td><td class="n">18 KB</td><td><span class="hash">afd04adba4b5542d51d86083171a3d96d2cc50bb64c06f984d2f733bac2d238e</span></td></tr><tr><td style="word-break:break-word">poverty_population_prov_2018_2021_2023.csv</td><td class="nowrap">2026-10-30</td><td class="n">12 KB</td><td><span class="hash">f0a2521f4fea36a54a5038990345a868f04acd5eebdf94d8aa279b605945482f</span></td></tr><tr><td style="word-break:break-word">poverty_population_prov_huc_2018_2021_2023.csv</td><td class="nowrap">2026-10-30</td><td class="n">14 KB</td><td><span class="hash">ac6c351f8a0c5382ede88554e40053e56f82c099ca62ad21e70386affd71e70e</span></td></tr></tbody></table></div>
         </details>
       </div>
     
       <div class="src">
         <h3>Philippine Standard Geographic Code, 3Q 2026</h3>
-        <p class="small">Current list of 42,010 barangays and 1,642 cities and municipalities. The Summary of Changes supplies merges, new barangays and renames.</p>
+        <p class="small">Current list of 42,010 barangays and 1,642 cities and municipalities. The Summary of Changes documents barangay mergers, newly established barangays, and name changes.</p>
         <div class="chips"><span><a href="https://psa.gov.ph/classification/psgc">Philippine Statistics Authority</a></span><span>psa.gov.ph, in a browser.</span><span>Official statistics, used with attribution</span></div>
         <details><summary>2 files</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
@@ -404,7 +398,7 @@
     
       <div class="src">
         <h3>Barangay boundaries, 2023</h3>
-        <p class="small">Polygons for the map and for all satellite extraction. No newer boundaries exist in this form.</p>
+        <p class="small">Polygons for the map and for all satellite extraction.</p>
         <div class="chips"><span><a href="https://github.com/faeldon/philippines-psgc-shapefiles">altcoder/philippines-psgc-shapefiles, now faeldon/philippines-psgc-shapefiles</a></span><span>Direct download.</span><span>MIT</span></div>
         <details><summary>1 file</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
@@ -414,8 +408,8 @@
     
       <div class="src">
         <h3>Community-Based Monitoring System poverty reports, 2005 to 2018</h3>
-        <p class="small">Trains and tests the barangay pattern. It is the only published barangay-level poverty data found. It is not redistributed here.</p>
-        <div class="chips"><span><a href="https://www.pep-net.org/">Partnership for Economic Policy; City of Bacolod</a></span><span>PDF downloads, read with pdftotext.</span><span>Publisher&#39;s terms; the parsed table is not republished</span></div>
+        <p class="small">Trains and tests the barangay pattern. It is the only published barangay-level poverty data publicly available online.</p>
+        <div class="chips"><span><a href="https://www.pep-net.org/">Partnership for Economic Policy; City of Bacolod</a></span><span>PDF downloads, read with pdftotext.</span></div>
         <details><summary>29 files</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
           <tbody><tr><td style="word-break:break-word">BacolodCity_CBMS2018.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.4 MB</td><td><span class="hash">d7c3a518b8b3dc43769f84e649e0b93845729121a8a3dcadce1add6021b377af</span></td></tr><tr><td style="word-break:break-word">CBMSPovertyMaps_Dinagat_Islands.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.0 MB</td><td><span class="hash">ebd54af1dbb0d99d85361a33ac485e7b60fa14a25d6a27dc11818d5f5338723f</span></td></tr><tr><td style="word-break:break-word">CBMSPovertyMaps_Marinduque.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.0 MB</td><td><span class="hash">9bb498f34c18bee55a2e44e578f1678e5772088ee0996608db202f6f79b7b910</span></td></tr><tr><td style="word-break:break-word">CBMSPovertyMaps_Oriental_Mindoro.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.4 MB</td><td><span class="hash">ebf4f672fe4e1c86c401eed6937a1c8a1c3c02bc6649656ca3a0ed4047150564</span></td></tr><tr><td style="word-break:break-word">CBMSPovertyMaps_Palawan.pdf</td><td class="nowrap">2026-10-30</td><td class="n">4.0 MB</td><td><span class="hash">818300c2279953f1c6a27a678f6e7c0e7c068a3405b7903c9d4e45a9835fe9ce</span></td></tr><tr><td style="word-break:break-word">CBMSPovertyMaps_Southern_Leyte.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.1 MB</td><td><span class="hash">70aaea1ca4d0427070da52211512e8c1ec7a76fcd978251875e5e20168905cd7</span></td></tr><tr><td style="word-break:break-word">CBMSPovertyMaps_adsfinal.pdf</td><td class="nowrap">2026-10-30</td><td class="n">1.3 MB</td><td><span class="hash">ca8d47cab44d66463ab000527efba0dad8ab8f4dc5367d826673c3312552eea6</span></td></tr><tr><td style="word-break:break-word">CBMSPovertyMaps_sarangani.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.4 MB</td><td><span class="hash">7c08a967f15e0ed344e1a7ae1b9b71c7c229ccf2171ba9a546c9a07e9d669459</span></td></tr><tr><td style="word-break:break-word">MarikinaCity_2012.pdf</td><td class="nowrap">2026-10-30</td><td class="n">1.9 MB</td><td><span class="hash">26619cb85ba4a00350878fad13b5a6a54ff169bfc2239216fe77068d393c3732</span></td></tr><tr><td style="word-break:break-word">NagaCity_2011-2013.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.5 MB</td><td><span class="hash">e7d3dc0c50236dd732ca6d8d0128d1e16bf0d2df131a6ee31d663636241a94e0</span></td></tr><tr><td style="word-break:break-word">OlongapoCity.pdf</td><td class="nowrap">2026-10-30</td><td class="n">1.1 MB</td><td><span class="hash">06ff70c94328bba870c1c28555bb1ed5c0f540224eb01dcaca5e3d187d5480c3</span></td></tr><tr><td style="word-break:break-word">PasayCity.pdf</td><td class="nowrap">2026-10-30</td><td class="n">2.2 MB</td><td><span class="hash">353d502a761a382b48e0f0dd119f82a90dd2dba192883080c2a5738216dc3b10</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol1-part1.pdf</td><td class="nowrap">2026-10-30</td><td class="n">7.1 MB</td><td><span class="hash">c3b790e53b833eedef7c6a6be200458130753467113495cc0eda27d30ab9a78f</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol1-part2.pdf</td><td class="nowrap">2026-10-30</td><td class="n">4.4 MB</td><td><span class="hash">5ae8c61114bc943e4051758c86e973d3fc5a42aae6a62e69cd362ac6393d14ee</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part1.pdf</td><td class="nowrap">2026-10-30</td><td class="n">6.7 MB</td><td><span class="hash">87177539f042827ffbf7eb1e326c12b9e122636ef074d998aa09f1a3c38424bf</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part10.pdf</td><td class="nowrap">2026-10-30</td><td class="n">8.8 MB</td><td><span class="hash">ac50fbfbc4c17a9e3149580579a500fbeffd29dbb45f2d3a4c1e17d3bfda142b</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part11.pdf</td><td class="nowrap">2026-10-30</td><td class="n">9.2 MB</td><td><span class="hash">658840a315e8800477c49a2af5f8d1918343e7a534dfa6f2cc44284b8578e075</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part12.pdf</td><td class="nowrap">2026-10-30</td><td class="n">5.7 MB</td><td><span class="hash">324a5ffc3ef4c6c172dbaccdf4b17acf55e3b22ccc70a0161cfb8451a1f65c8f</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part13.pdf</td><td class="nowrap">2026-10-30</td><td class="n">8.7 MB</td><td><span class="hash">3276a167b42ec0fce6643907b87d2e25b585c71d9cfd759f77008610be91a544</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part14.pdf</td><td class="nowrap">2026-10-30</td><td class="n">4.5 MB</td><td><span class="hash">6f5f38c11dc4f06ae40a1c66feb7d56aac6a2f159d39fcbd4345618d8d14322d</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part15.pdf</td><td class="nowrap">2026-10-30</td><td class="n">963 KB</td><td><span class="hash">f6fbd2a6267e6071d40829640e433c0494470c822012853234cfcb6ef535b434</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part2.pdf</td><td class="nowrap">2026-10-30</td><td class="n">5.8 MB</td><td><span class="hash">6a1343efa5e0e997cf30b5012be9e1658a67fde8a11f72d51c2b4234e768df3f</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part3.pdf</td><td class="nowrap">2026-10-30</td><td class="n">9.4 MB</td><td><span class="hash">c1bae2c961e67075a552469f00fcb5fbd33896637894fdb8a9479993795f5e86</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part4.pdf</td><td class="nowrap">2026-10-30</td><td class="n">6.9 MB</td><td><span class="hash">a5ff63b92ba4625cdb63fbcb9554584311ac04086df32f79123c3728cd9b0677</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part5.pdf</td><td class="nowrap">2026-10-30</td><td class="n">4.1 MB</td><td><span class="hash">cfa58ad55421258e941631fe242dd4fc261c396ac5dff667af7ed81b4070eef4</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part6.pdf</td><td class="nowrap">2026-10-30</td><td class="n">8.3 MB</td><td><span class="hash">1c5a1bf8c1911b0b0351f09eb85cb571429928d354cc3f924dd094e86a1fbb24</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part7.pdf</td><td class="nowrap">2026-10-30</td><td class="n">5.9 MB</td><td><span class="hash">fed6e79319aeba76864bebde8c3453a0f1a01e95d6630329d35eeaf32610622c</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part8.pdf</td><td class="nowrap">2026-10-30</td><td class="n">5.7 MB</td><td><span class="hash">629a9051b25eae0c6264483081875529eb077c5ff7cd8055ce38378465772c40</span></td></tr><tr><td style="word-break:break-word">TheManyFacesofPoverty_Vol3_Part9.pdf</td><td class="nowrap">2026-10-30</td><td class="n">6.5 MB</td><td><span class="hash">f7ca6018b8c1f13eb1ba2d39644e37e0ebf8469f3815727c631d465c21bc7324</span></td></tr></tbody></table></div>
@@ -424,11 +418,31 @@
     
       <div class="src">
         <h3>Relative Wealth Index</h3>
-        <p class="small">An outside check on the estimates. It is not a model input and is not redistributed here.</p>
+        <p class="small">Provides an external measure against which the estimates can be compared.</p>
         <div class="chips"><span><a href="https://data.humdata.org/dataset/relative-wealth-index">Meta, via the Humanitarian Data Exchange</a></span><span>Direct download.</span><span>CC BY-NC 4.0</span></div>
         <details><summary>1 file</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
           <tbody><tr><td style="word-break:break-word">phl_relative_wealth_index.csv</td><td class="nowrap">2026-10-30</td><td class="n">1.4 MB</td><td><span class="hash">29c65f93bc4f3a9faa154cf26a42cdd7cc85ad2f37af6c33b84d59c83482b529</span></td></tr></tbody></table></div>
+        </details>
+      </div>
+    
+      <div class="src">
+        <h3>Income classes</h3>
+        <p class="small">Defines the income classes on the income calculator.</p>
+        <div class="chips"><span><a href="https://pidswebs.pids.gov.ph/CDN/PUBLICATIONS/pidsdps1820.pdf">Philippine Institute for Development Studies</a></span><span>Direct download.</span></div>
+        <details><summary>1 file</summary>
+          <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
+          <tbody><tr><td style="word-break:break-word">pidsdps1820.pdf</td><td class="nowrap">2026-11-02</td><td class="n">1.3 MB</td><td><span class="hash">1467a3f65cfd8fde0a4644020400a15585fda0b3a6ef876cf9d7519990ce7314</span></td></tr></tbody></table></div>
+        </details>
+      </div>
+    
+      <div class="src">
+        <h3>Family living wage, August 2026</h3>
+        <p class="small">Provides the living wage and minimum wage figures on the income calculator.</p>
+        <div class="chips"><span><a href="https://www.ibon.org/en/flw-regl-2608/">IBON Foundation</a></span><span>Graphics on ibon.org. The values were read from them.</span></div>
+        <details><summary>21 files</summary>
+          <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
+          <tbody><tr><td style="word-break:break-word">flw-ph-p1-gradient1-819x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.7 MB</td><td><span class="hash">42051a1ca1841c89ba8857444a8a3c809d2a5867cb5d6167ad065179ea7f5fbf</span></td></tr><tr><td style="word-break:break-word">flw-ph-p2-voronoi-v1-819x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.6 MB</td><td><span class="hash">4f34a69b9a55f2728f7b3ae38f3f353be56b655a7dfd29aa2cca08c45a47625d</span></td></tr><tr><td style="word-break:break-word">flw-regl_00-wg-nominal3-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.9 MB</td><td><span class="hash">3f3bff3f6c3aa34cb7e02eeba8cd577fd677b84912229f0733b90f4824f87701</span></td></tr><tr><td style="word-break:break-word">flw-regl_00-wg-percent1-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">c30a83d10186a986a04c9aeec8740161f61be2ad2a645c392077a2118a3fc021</span></td></tr><tr><td style="word-break:break-word">flw-regl_01-ncr7-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.7 MB</td><td><span class="hash">e44363c8b3df3548351bf9244bc486f201064d24ca698a5c6a1382a1b9137b49</span></td></tr><tr><td style="word-break:break-word">flw-regl_02-car7-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">0d3d945c623f385a4107c9646cb5c1202fcea8b8178b3f6e07e09657f23fc1a4</span></td></tr><tr><td style="word-break:break-word">flw-regl_03-reg17-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">9e9630005dbb418974d704a923fc36fbe5a0648367419d7d2aceb1895fa25c30</span></td></tr><tr><td style="word-break:break-word">flw-regl_04-reg27-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">b2ab13917cd0b8144027beb3ce324d1184bdd88b5140a69ae23349c06d7204c1</span></td></tr><tr><td style="word-break:break-word">flw-regl_05-reg36-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.7 MB</td><td><span class="hash">f273a548f4f8b8b00dbfe4db049b3d0981d62394834cbb6687fcb2c6a3362469</span></td></tr><tr><td style="word-break:break-word">flw-regl_06-reg4a7-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">bbea6c9f8c7744f8fbda29f8806746dd1f7839fa466d51f0f1ea3c1ec66a4e66</span></td></tr><tr><td style="word-break:break-word">flw-regl_07-reg4b7-1-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">bab45b0812c05d4790ac1d1d408ec3966863fc74c937de6c01037ced974f8384</span></td></tr><tr><td style="word-break:break-word">flw-regl_08-reg56-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">4ef1e26aed6c8920592560043fe3aa058b6ee7f84d703ba562714ae9a667272d</span></td></tr><tr><td style="word-break:break-word">flw-regl_09-reg67-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">a892f6fca9b7d7bc3df82bea69cca4e8c60d3792f43bb2390d91071a9fe0960d</span></td></tr><tr><td style="word-break:break-word">flw-regl_10-reg77-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">25d744faabd321a7dc63412c5a77f5bf2190476d1120ffd8fbe4e65c9151a36a</span></td></tr><tr><td style="word-break:break-word">flw-regl_11-reg87-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">cd8b9f4b463295e2e90efb54d4dcec118660446dfb277517c29874665d3bd1b6</span></td></tr><tr><td style="word-break:break-word">flw-regl_12-reg97-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">1bcc5e82e349bc0addeedb4a5e8403965eb9aa6ca579dccaf5348d8336f89da2</span></td></tr><tr><td style="word-break:break-word">flw-regl_13-reg107-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">06e165d7eb023d5c3d4b1a2cfc1428f1683678d6ae85b5dd41a452e6537fcf3c</span></td></tr><tr><td style="word-break:break-word">flw-regl_14-reg117-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">e9e03c1b7044a14e060e29eae877e933fdbb2dc5657d7a79410adc2c84e29640</span></td></tr><tr><td style="word-break:break-word">flw-regl_15-reg127-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">8a5a74e04f0e28a814256b6ed221c84fbb28f54f999c931b0f3ecb22e0358373</span></td></tr><tr><td style="word-break:break-word">flw-regl_16-caraga7-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">77749fe443004b00c1629eff1758df5ac0cb934161b5b6b8b4aa6603895ecf06</span></td></tr><tr><td style="word-break:break-word">flw-regl_17-barmm6-1024x1024.png</td><td class="nowrap">2026-11-02</td><td class="n">1.8 MB</td><td><span class="hash">cd5e18a14bff4f3ea3c427622e0de79b1d871eafbbcd24e89e06d20fdbaca079</span></td></tr></tbody></table></div>
         </details>
       </div>
     
@@ -443,7 +457,7 @@
     <div class="theme-switch" id="theme-switch"><span>Theme</span></div>
   </div>
 </footer>
-<script type="module">import { initTheme } from "./assets/js/lib.js?b=37970f11b8"; initTheme();</script>
-<script type="module" src="assets/js/methodology.js?b=37970f11b8"></script>
+<script type="module">import { initTheme } from "./assets/js/lib.js?b=fe9574329e"; initTheme();</script>
+<script type="module" src="assets/js/methodology.js?b=fe9574329e"></script>
 </body>
 </html>

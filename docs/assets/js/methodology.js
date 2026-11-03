@@ -1,6 +1,6 @@
 // Methodology page: which inputs the models rely on, and how they compare with simpler approaches on held-out data.
-import { getJSON, figure } from "./lib.js?b=37970f11b8";
-import { barsH } from "./charts.js?b=37970f11b8";
+import { getJSON, figure } from "./lib.js?b=fe9574329e";
+import { barsH } from "./charts.js?b=fe9574329e";
 
 const two = (v) => v.toFixed(2);
 const three = (v) => (v == null ? "n/a" : v.toFixed(3));
@@ -18,28 +18,28 @@ function chart(id, { title, sub, rows, color, table }) {
 async function boot() {
   const M = await getJSON("methodology.json");
   chart("importance-income", {
-    title: "Inputs the income model relies on",
+    title: "Feature importance in the household income model",
     sub: "Reduction in R² on held-out areas when each group of inputs is randomly rearranged.",
     rows: M.importance.income,
     color: "income",
     table: () => ({ headers: ["Inputs", "Number of inputs", "R² when rearranged", "Reduction in R²"], numeric: [0, 1, 1, 1], rows: M.importance.income.map((r) => [r.label, r.inputs, three(r.score), three(r.value)]) }),
   });
   chart("importance-poverty", {
-    title: "Inputs the poverty model relies on",
+    title: "Feature importance in the poverty model",
     sub: "Reduction in rank correlation on held-out surveys when each group of inputs is randomly rearranged.",
     rows: M.importance.poverty,
     color: "poverty",
     table: () => ({ headers: ["Inputs", "Number of inputs", "Rank correlation when rearranged", "Reduction"], numeric: [0, 1, 1, 1], rows: M.importance.poverty.map((r) => [r.label, r.inputs, three(r.score), three(r.value)]) }),
   });
   chart("models-income", {
-    title: "Income models compared",
+    title: "Comparison of income models",
     sub: "Share of differences explained (R²) on held-out provinces and cities. Higher is better.",
     rows: M.income_models.map((r) => ({ ...r, used: !!r.used })),
     color: "income",
     table: () => ({ headers: ["Model", "R²", "Average error %"], numeric: [0, 1, 1], rows: M.income_models.map((r) => [r.label, three(r.value), r.error]) }),
   });
   chart("models-poverty", {
-    title: "Poverty models compared",
+    title: "Comparison of poverty models",
     sub: "Rank correlation with surveyed poverty within a municipality, on held-out reports. Higher is better.",
     rows: M.poverty_models.map((r) => ({ ...r, used: !!r.used })),
     color: "poverty",

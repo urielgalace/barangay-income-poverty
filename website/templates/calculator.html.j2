@@ -1,0 +1,58 @@
+{% extends "base.html.j2" %}
+{% block main %}
+<div class="wrap">
+  <div class="page-title">
+    <h1>Income Calculator</h1>
+    <p class="lede">Enter your income to see where it ranks nationwide and in your area, which income class you belong to, and how it compares with the living wage.</p>
+  </div>
+  <form class="calc-form" id="c-form" autocomplete="off" novalidate>
+    <div class="filters">
+      <div class="field"><label for="c-income">Income (₱)</label><input type="text" inputmode="decimal" id="c-income" placeholder="For example, 30,000"></div>
+      <div class="field"><span>Period</span><div id="c-period"></div></div>
+      <div class="field"><span>Income of</span><div id="c-basis"></div></div>
+      <div class="field" id="c-size-field" hidden><label for="c-size">Household size</label><input type="number" id="c-size" min="1" max="30" step="1" value="5"></div>
+    </div>
+    <div class="field combo"><label for="c-place">Location (optional)</label><input type="search" id="c-place" placeholder="Barangay, city, municipality, province or region"></div>
+    <p class="small calc-msg" id="c-msg" role="status"></p>
+    <p class="small">Everything is calculated in your browser. Your income and location are not sent or stored anywhere.</p>
+  </form>
+
+  <div id="c-results" hidden>
+    <dl class="stats" id="r-cards" style="margin-top:28px" aria-live="polite"></dl>
+    <section class="block" style="margin-top:28px">
+      <header><h2>Income percentile</h2></header>
+      <div class="prose" id="r-pct-text"></div>
+      <div id="r-pct-fig"></div>
+    </section>
+    <section class="block">
+      <header><h2>Income class</h2></header>
+      <div class="prose" id="r-class-text"></div>
+      <div class="tv" style="max-height:none"><table class="ladder" id="r-class-table"></table></div>
+    </section>
+    <section class="block">
+      <header><h2>Living wage</h2></header>
+      <div class="prose" id="r-wage-text"></div>
+      <div id="r-wage-fig"></div>
+    </section>
+  </div>
+
+  <section class="block" style="margin-top:28px">
+    <details>
+      <summary>How this is calculated</summary>
+      <div class="prose">
+        <h3>Income percentile</h3>
+        <p>The <a href="https://psa.gov.ph/statistics/income-expenditure/fies">Family Income and Expenditure Survey</a> (FIES) 2025 publishes average household income for ten income groups in each region, province and highly urbanized city, but not individual records. In each area, an income curve (a Dagum distribution) is fitted to those averages, after dividing them by household size, and to the official poverty rate where there is one. Percentiles count people, ranked by the income per person of their households, so the poverty line sits close to PSA's poverty incidence of {{ meta.poverty }}%.</p>
+        <p>FIES has no distribution of individual earnings. An individual income is therefore compared with income per person as it is, and a household income is divided by household size first. Someone who supports dependents will rank lower by entering their household income and size. Your income is first converted to 2025 prices using PSA's consumer price index, on the assumption that incomes have kept up with prices since then.</p>
+        <p>Cities, municipalities and barangays without their own FIES figures use the curve of their province or region, shifted to their estimated average income per person. This assumes that incomes are spread out in the same way, so these percentiles are rough. Barangay ranges reflect the margin of error of the barangay's estimate. Province figures leave out highly urbanized cities, as FIES does.</p>
+        <p>As a test, before the poverty rate was added to the fit, the curves placed each area's poverty line an average of {{ calc.check.mae }} percentage points from its official poverty rate across {{ calc.check.n }} areas with official poverty rates ({{ calc.check.mae_region }} points for regions). Nationally, they gave {{ calc.check.ph_2025 }}% in 2025, against an official {{ meta.poverty }}%. The same method reproduced each of PIDS's published class shares for 2018 to within {{ calc.check.pids_max_gap }} percentage points.</p>
+        <h3>Income class</h3>
+        <p>The income classes come from the Philippine Institute for Development Studies (<a href="https://pidswebs.pids.gov.ph/CDN/PUBLICATIONS/pidsdps1820.pdf">Albert, Santos and Vizmanos, 2018</a>), which defines them by income per person as a multiple of the official poverty line. This calculator uses the 2025 national poverty line of ₱{{ calc.line_year|num }} per person per year, updated to {{ calc.prices }} prices using PSA's consumer price index, which rose {{ calc.cpi_pct }}%. That comes to ₱{{ calc.line_now|num }} per person per month, or ₱{{ calc.line_now_family5|num }} for a family of five. Thresholds for a household are the thresholds per person multiplied by household size.</p>
+        <h3>Living wage</h3>
+        <p>Living wage figures are the family living wage published by <a href="https://www.ibon.org/en/flw-natl-2608/">IBON Foundation</a> as of {{ calc.ibon_as_of }}, nationally and <a href="https://www.ibon.org/en/flw-regl-2608/">by region</a>: what a family of five should receive to live decently. IBON bases them on data from the National Wages and Productivity Commission and PSA. Daily regional figures are converted to monthly figures using 261 paid days a year, which reproduces IBON's national monthly figures to within ₱8.</p>
+        <p>An individual income is compared with the full figure for a family of five. A household income is compared with that figure scaled in proportion to household size. IBON does not publish figures below the regional level, so cities, municipalities and barangays use their region's figure. Caraga uses the national figure, because the commission released none for it. In the Negros Island Region, which has no figure of its own, Negros Occidental uses the figure for Western Visayas, Negros Oriental and Siquijor use the figure for Central Visayas, and the region as a whole uses the national figure.</p>
+      </div>
+    </details>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="assets/js/calculator.js?b={{ build }}"></script>{% endblock %}

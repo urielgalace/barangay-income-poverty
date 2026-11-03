@@ -293,7 +293,7 @@
       <div class="src">
         <h3>{{ g.name }}</h3>
         <p class="small">{{ g.use }}</p>
-        <div class="chips"><span><a href="{{ g.url }}">{{ g.publisher }}</a></span><span>{{ g.access }}</span><span>{{ g.license }}</span></div>
+        <div class="chips"><span><a href="{{ g.url }}">{{ g.publisher }}</a></span><span>{{ g.access }}</span>{% if g.get("license") %}<span>{{ g.license }}</span>{% endif %}</div>
         <details><summary>{{ g.files|length }} {{ "file" if g.files|length == 1 else "files" }}</summary>
           <div class="tv"><table><thead><tr><th scope="col">File</th><th scope="col">Added</th><th scope="col" class="n">Size</th><th scope="col">SHA-256</th></tr></thead>
           <tbody>{% for f in g.files %}<tr><td style="word-break:break-word">{{ f.name }}</td><td class="nowrap">{{ f.added }}</td><td class="n">{{ f.size|bytes }}</td><td><span class="hash">{{ f.sha256 }}</span></td></tr>{% endfor %}</tbody></table></div>

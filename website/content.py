@@ -27,6 +27,26 @@ VERSIONS = [
         ]),
 ]
 
+# Income classes of the Philippine Institute for Development Studies, as multiples of the official poverty line, applied to
+# income per person (Albert, Santos and Vizmanos 2018, Table 3).
+PIDS_CLASSES = [("Poor", 0, 1), ("Low income (but not poor)", 1, 2), ("Lower middle income", 2, 4), ("Middle middle income", 4, 7),
+                ("Upper middle income", 7, 12), ("Upper income (but not rich)", 12, 20), ("Rich", 20, None)]
+
+# IBON Foundation, "Minimum Wage and Family Living Wage per Region" and "National Family Living Wage", as of August 2026, read
+# from its graphics. Region: (name in a sentence, minimum wage, family living wage for a family of five), in pesos per day.
+IBON_AS_OF = "August 2026"
+IBON_DAYS = 261     # IBON's monthly figures assume a 5-day work week, so 261 paid days a year
+IBON_NATIONAL = dict(flw_day=1309, flw_month=28463, mw_day=514, mw_month=11176)
+IBON_WAGES = {
+    "NCR": ("Metro Manila", 695, 1293), "CAR": ("the Cordillera Administrative Region", 505, 1314), "Ilocos": ("the Ilocos Region", 505, 1208),
+    "Cagayan Valley": ("Cagayan Valley", 500, 1189), "Central Luzon": ("Central Luzon", 600, 1253), "CALABARZON": ("CALABARZON", 600, 1223),
+    "MIMAROPA": ("MIMAROPA", 455, 1310), "Bicol": ("the Bicol Region", 455, 1278), "Western Visayas": ("Western Visayas", 550, 1081),
+    "Central Visayas": ("Central Visayas", 540, 1415), "Eastern Visayas": ("Eastern Visayas", 470, 945), "Zamboanga Peninsula": ("the Zamboanga Peninsula", 464, 1373),
+    "Northern Mindanao": ("Northern Mindanao", 500, 1304), "Davao": ("the Davao Region", 525, 1281), "SOCCSKSARGEN": ("SOCCSKSARGEN", 460, 1269),
+    "Caraga": ("Caraga", 475, None), "BARMM": ("BARMM", 436, 2203)}     # the wage commission released no figure for Caraga
+# IBON has no figure for the Negros Island Region, so its provinces take the figure of the region they belonged to.
+IBON_NEGROS = {"Negros Occidental": "Western Visayas", "Negros Oriental": "Central Visayas", "Siquijor": "Central Visayas"}
+
 # Dated log of what entered the project. File dates come from the files themselves, so the groups below only give them names.
 LOG_GROUPS = [
     ("data/raw/2_2023 SAE_with PSGC_noHUC_06Feb2026.xlsx", "Municipal small-area estimates for 2018, 2021 and 2023", "PSA"),
@@ -65,8 +85,8 @@ def build_log(raw, root):
 
 
 SOURCE_GROUPS = [
-    dict(id="poverty", name="Official poverty statistics", publisher="Philippine Statistics Authority", url="https://psa.gov.ph/statistics/poverty", access="psa.gov.ph, in a browser. The site's human check blocks scripts.",
-         use="Sets 2025 poverty levels for regions, provinces and NCR districts. Supplies the 2018 to 2025 trends, their confidence intervals, poverty lines and poor-population counts.",
+    dict(id="poverty", name="Official poverty statistics", publisher="Philippine Statistics Authority", url="https://psa.gov.ph/statistics/poverty", access="psa.gov.ph, in a browser.",
+         use="Provides official 2025 poverty estimates for regions, provinces, and NCR districts, along with poverty trends from 2018 to 2025, confidence intervals, poverty thresholds, and estimates of the population living in poverty.",
          license="Official statistics, used with attribution",
          patterns=["data/raw/official_2025/2025 Full Year*", "data/raw/2023 Full Year*"]),
     dict(id="fies", name="Family Income and Expenditure Survey", publisher="Philippine Statistics Authority", url="https://psa.gov.ph/statistics/income-expenditure/fies", access="psa.gov.ph, in a browser.",
@@ -74,33 +94,38 @@ SOURCE_GROUPS = [
          license="Official statistics, used with attribution",
          patterns=["data/raw/official_2025/FIES*", "data/raw/Table 1*"]),
     dict(id="sae", name="Municipal small-area poverty estimates", publisher="Philippine Statistics Authority", url="https://psa.gov.ph/statistics/poverty-sae", access="psa.gov.ph, in a browser.",
-         use="Sets the pattern across municipalities inside each province. Latest round is 2023.",
+         use="Provides the distribution of poverty across municipalities within each province, based on the latest available estimates from 2023.",
          license="Official statistics, used with attribution",
          patterns=["data/raw/2_2023 SAE*"]),
     dict(id="census", name="2024 Census of Population and Housing", publisher="Philippine Statistics Authority", url="https://openstat.psa.gov.ph/", access="PSA OpenSTAT public API (PXWeb), one table per region.",
-         use="Population, households and urban or rural status for every barangay. All weights in the dataset.",
+         use="Population, households and urban or rural status for all barangays. All weights in the dataset.",
          license="Official statistics, used with attribution",
          patterns=["data/raw/popcen2024/*"]),
     dict(id="openstat", name="Poverty and FIES tables on OpenSTAT", publisher="Philippine Statistics Authority", url="https://openstat.psa.gov.ph/", access="PSA OpenSTAT public API (PXWeb).",
-         use="Cross-checks on the official workbooks, and the 2018 poverty line.",
+         use="Cross-checks on the official workbooks, and the 2018 poverty line. For the income calculator, the consumer price index and family sizes from FIES 2023.",
          license="Official statistics, used with attribution",
          patterns=["data/raw/openstat/*"]),
     dict(id="psgc", name="Philippine Standard Geographic Code, 3Q 2026", publisher="Philippine Statistics Authority", url="https://psa.gov.ph/classification/psgc", access="psa.gov.ph, in a browser.",
-         use="Current list of 42,010 barangays and 1,642 cities and municipalities. The Summary of Changes supplies merges, new barangays and renames.",
+         use="Current list of 42,010 barangays and 1,642 cities and municipalities. The Summary of Changes documents barangay mergers, newly established barangays, and name changes.",
          license="Official statistics, used with attribution",
          patterns=["data/raw/psgc/*"]),
     dict(id="boundaries", name="Barangay boundaries, 2023", publisher="altcoder/philippines-psgc-shapefiles, now faeldon/philippines-psgc-shapefiles", url="https://github.com/faeldon/philippines-psgc-shapefiles", access="Direct download.",
-         use="Polygons for the map and for all satellite extraction. No newer boundaries exist in this form.",
+         use="Polygons for the map and for all satellite extraction.",
          license="MIT",
          patterns=["data/raw/PH_Adm4_BgySubMuns.shp.zip"]),
     dict(id="cbms", name="Community-Based Monitoring System poverty reports, 2005 to 2018", publisher="Partnership for Economic Policy; City of Bacolod", url="https://www.pep-net.org/", access="PDF downloads, read with pdftotext.",
-         use="Trains and tests the barangay pattern. It is the only published barangay-level poverty data found. It is not redistributed here.",
-         license="Publisher's terms; the parsed table is not republished",
+         use="Trains and tests the barangay pattern. It is the only published barangay-level poverty data publicly available online.",
          patterns=["data/raw/cbms/*"]),
     dict(id="rwi", name="Relative Wealth Index", publisher="Meta, via the Humanitarian Data Exchange", url="https://data.humdata.org/dataset/relative-wealth-index", access="Direct download.",
-         use="An outside check on the estimates. It is not a model input and is not redistributed here.",
+         use="Provides an external measure against which the estimates can be compared.",
          license="CC BY-NC 4.0",
          patterns=["data/raw/rwi/*"]),
+    dict(id="pids", name="Income classes", publisher="Philippine Institute for Development Studies", url="https://pidswebs.pids.gov.ph/CDN/PUBLICATIONS/pidsdps1820.pdf", access="Direct download.",
+         use="Defines the income classes on the income calculator.",
+         patterns=["data/raw/pids/*"]),
+    dict(id="ibon", name="Family living wage, August 2026", publisher="IBON Foundation", url="https://www.ibon.org/en/flw-regl-2608/", access="Graphics on ibon.org. The values were read from them.",
+         use="Provides the living wage and minimum wage figures on the income calculator.",
+         patterns=["data/raw/ibon/2026-08/*"]),
 ]
 
 SATELLITE = [
