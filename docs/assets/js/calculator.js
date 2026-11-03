@@ -1,9 +1,9 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
-import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=01f84d6641";
-import { barsH } from "./charts.js?b=01f84d6641";
-import { RAMPS, colorOf } from "./ramps.js?b=01f84d6641";
-import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=01f84d6641";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=de1e60b2b7";
+import { barsH } from "./charts.js?b=de1e60b2b7";
+import { RAMPS, colorOf } from "./ramps.js?b=de1e60b2b7";
+import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=de1e60b2b7";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];
@@ -110,12 +110,12 @@ async function boot() {
   let area = null;
   let areaBuild = 0;
   let areaPaint = 0;
-  let hover = { n: 1, house: false, period: "month" };     // what the tooltip's average income is expressed in
+  let hover = { period: "month" };     // the tooltip shows average household income for the period entered
   $("r-scale").replaceChildren(...BANDS.colors.map((c, i) => h("div", { class: "sw" }, h("i", { style: `background:${c}` }), h("span", { text: BAND_TICKS[i] }))));
   const NOUN = { barangays: "Barangay", "cities and municipalities": "City or municipality", provinces: "Province", districts: "District", regions: "Region" };
   const plain = (name) => name.replace(/^the /, "").replace(/^./, (c) => c.toUpperCase());
   const allProvinces = objects(ar.province);
-  const avgLabel = () => `average income, ${hover.house ? `household of ${hover.n}` : "one person"}, per ${hover.period}`;
+  const avgLabel = () => `average household income per ${hover.period}`;
 
   function areaSpec(p) {
     if (p.bgyId) return { level: "bgy", key: `bgys:${p.lgu.id}`, self: p.bgyId };
@@ -150,11 +150,11 @@ async function boot() {
           const live = v.t[i] !== 3 && v.i[i] != null;
           const name = v.n[i] || "Not a barangay";
           units.push({ id, name, label: name, geom: geo.geom[i], d, own: false, k: live ? scaled(v.i[i], v.h[i] / v.f[i], d) : null,
-            lon: pts.get(id)?.lon, lat: pts.get(id)?.lat, pick: v.t[i] !== 3 ? { kind: "bgy", name: v.n[i], lgu: l, chunk, id } : null });
+            inc: live ? v.i[i] : null, lon: pts.get(id)?.lon, lat: pts.get(id)?.lat, pick: v.t[i] !== 3 ? { kind: "bgy", name: v.n[i], lgu: l, chunk, id } : null });
         });
       }
       return { title: `Your percentile in each barangay of ${cityFirst(l.name)}`, word: "barangays", one: "barangay", where: cityFirst(l.name), units,
-        note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These rankings should therefore be interpreted as rough estimates. Select a barangay on the map to use it as your location.` };
+        note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These are model-based estimates, and figures for individual barangays may be inaccurate. These rankings should therefore be interpreted as rough estimates. Select a barangay on the map to use it as your location.` };
     }
     if (spec.level === "lgu") {
       const [geo, lg] = await Promise.all([getJSON("geo/lgu.json"), getJSON("lgus.json")]);
@@ -172,7 +172,7 @@ async function boot() {
         const d = C.dist[C.lgu[l.id]];
         const own = d.id === l.id;
         return { id: l.id, name: cityFirst(l.name), label: cityFirst(l.name), geom: shape.get(l.id), d, own, k: l.i != null ? (own ? 1 : scaled(l.i, l.pop / l.hh, d)) : null,
-          lon: l.lon, lat: l.lat, pick: { kind: "lgu", name: l.name, lgu: l, id: l.id } };
+          inc: l.i, lon: l.lon, lat: l.lat, pick: { kind: "lgu", name: l.name, lgu: l, id: l.id } };
       });
       return { title: `Your percentile in each city and municipality of ${where}`, word: "cities and municipalities", one: "city or municipality", where, units,
         note: borrowNote(units, "cities and municipalities", "city and municipality", where) };
@@ -187,7 +187,7 @@ async function boot() {
         const d = C.dist[C.prov[x.id]];
         const own = d.id === x.id;
         const name = the(provName(x));
-        return { id: x.id, name, label: plain(name), geom: shape.get(x.id), d, own, k: own ? 1 : scaled(x.i, x.pop / x.hh, d), lon: x.lon, lat: x.lat,
+        return { id: x.id, name, label: plain(name), geom: shape.get(x.id), d, own, k: own ? 1 : scaled(x.i, x.pop / x.hh, d), inc: x.i, lon: x.lon, lat: x.lat,
           pick: { kind: "prov", name: provName(x), p: x } };
       });
       const word = districts ? "districts" : "provinces";
@@ -198,7 +198,7 @@ async function boot() {
     const shape = new Map(geo.ids.map((id, i) => [id, geo.geom[i]]));
     const units = regions.filter((r) => shape.has(r.id)).map((r) => {
       const name = regionLabel(r.short);
-      return { id: r.short, name, label: plain(name), geom: shape.get(r.id), d: C.dist[C.reg[r.short]], own: true, k: 1, lon: r.lon, lat: r.lat, pick: { kind: "reg", name: r.name, r } };
+      return { id: r.short, name, label: plain(name), geom: shape.get(r.id), d: C.dist[C.reg[r.short]], own: true, k: 1, inc: r.i, lon: r.lon, lat: r.lat, pick: { kind: "reg", name: r.name, r } };
     });
     return { title: "Your percentile in each region of the Philippines", word: "regions", one: "region", where: "the Philippines", units,
       note: borrowNote(units, "regions", "region", "the Philippines") };
@@ -282,13 +282,14 @@ async function boot() {
     }
     if (pid !== areaPaint || place !== p) return;
     sec.hidden = false;
-    hover = { n, house, period };
+    hover = { period };
     const yearly = period === "year" ? 12 : 1;
     const ranked = [];
     for (const u of area.units) {
       u.v = u.k != null ? shareBelow(adjusted / u.k, u.d) : null;
-      // the place's average income, adjusted to your household size and period, in the latest month's prices
-      u.avg = u.k != null ? (u.d.i / Math.sqrt(u.d.z)) * u.k * Math.sqrt(n) * P.factor * yearly : null;
+      u.avg = u.inc != null ? u.inc * yearly : null;
+      // for the table: the same place's income adjusted to your household size, in the latest month's prices
+      u.adj = u.k != null ? (u.d.i / Math.sqrt(u.d.z)) * u.k * Math.sqrt(n) * P.factor * yearly : null;
       u.p.setAttribute("fill", colorOf(BANDS, u.v));
       u.p.classList.toggle("here", u.id === spec.self);
       if (u.v != null) ranked.push(u);
@@ -321,8 +322,9 @@ async function boot() {
       area.note);
     const table = () => $("r-map-table").replaceChildren(
       h("thead", {}, h("tr", {}, h("th", { scope: "col", text: NOUN[area.word] }), h("th", { scope: "col", class: "n", text: "Your percentile" }),
-        h("th", { scope: "col", class: "n", text: `Average income (₱) per ${period}, ${house ? `household of ${n}` : "one person"}` }))),
-      h("tbody", {}, ranked.map((u) => h("tr", {}, h("td", { text: u.label }), h("td", { class: "n", text: pctLabel(u.v) }), h("td", { class: "n", text: fmt.hundreds(u.avg) })))));
+        h("th", { scope: "col", class: "n", text: `Average household income (₱) per ${period}` }),
+        h("th", { scope: "col", class: "n", text: `Adjusted to ${house ? `a household of ${n}` : "one person"}, at today’s prices (₱) per ${period}` }))),
+      h("tbody", {}, ranked.map((u) => h("tr", {}, h("td", { text: u.label }), h("td", { class: "n", text: pctLabel(u.v) }), h("td", { class: "n", text: fmt.hundreds(u.avg) }), h("td", { class: "n", text: fmt.hundreds(u.adj) })))));
     $("r-map-all").ontoggle = () => { if ($("r-map-all").open) table(); };
     if ($("r-map-all").open) table();
   }
