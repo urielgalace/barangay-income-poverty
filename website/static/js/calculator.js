@@ -154,7 +154,7 @@ async function boot() {
         });
       }
       return { title: `Your percentile in each barangay of ${cityFirst(l.name)}`, word: "barangays", one: "barangay", where: cityFirst(l.name), units,
-        note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These are model-based estimates, and figures for individual barangays may be inaccurate. These rankings should therefore be interpreted as rough estimates. Select a barangay on the map to use it as your location.` };
+        note: `Barangay-level percentiles are estimated using the income distribution of ${cityFirst(refName(d, l))}, adjusted to each barangay’s estimated average household income and household size. These are model-based estimates, and figures for individual barangays may be inaccurate. These rankings should therefore be interpreted as rough approximations. Select a barangay on the map to use it as your location.` };
     }
     if (spec.level === "lgu") {
       const [geo, lg] = await Promise.all([getJSON("geo/lgu.json"), getJSON("lgus.json")]);
