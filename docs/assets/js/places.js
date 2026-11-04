@@ -1,5 +1,5 @@
 // The search index: every barangay, city and municipality, loaded once on first use.
-import { getJSON, objects, rankMatches } from "./lib.js?b=65ddb44d93";
+import { getJSON, objects, rankMatches } from "./lib.js?b=e70a724fff";
 
 let cached;
 export function loadPlaces() {

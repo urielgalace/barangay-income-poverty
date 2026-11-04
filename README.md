@@ -2,7 +2,9 @@
 
 **Website: https://urielgalace.github.io/barangay-income-poverty/**
 
-A dataset covering all 42,010 barangays in the Philippines. Official government data are used for income and poverty rates at the regional and provincial levels, while machine learning is used to estimate data at the barangay level. All barangay estimates are preliminary and are a work-in-progress.
+A dataset covering all 42,010 barangays in the Philippines. Official government data are used for income and poverty rates at the regional and provincial levels, while machine learning is used to estimate data at the barangay level.
+
+**All barangay estimates are preliminary and are a work-in-progress.**
 
 Barangay and municipal figures are estimates. A typical barangay's 90% interval is about 32 percentage points wide, indicating a substantial error margin, so they should be used with caution.
 

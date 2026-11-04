@@ -35,6 +35,8 @@
   --del-wash: #fae9e6;
   --chg: #8a5a00;
   --chg-wash: #f8efd9;
+  --warn-bg: #fbf2dc;
+  --warn-ink: #6b4a00;
   --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -54,7 +56,7 @@
     --accent: #62c4d8; --accent-wash: #16323a; --on-ink: #0a1418;
     --poverty: #d95926; --income: #3987e5; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
     --context: #6f8289; --context-2: #3d4f56; --grid: #1c2b31; --axis: #35484f;
-    --add: #4fc98a; --add-wash: #12302a; --del: #f0897f; --del-wash: #38201e; --chg: #e0b45c; --chg-wash: #33291a;
+    --add: #4fc98a; --add-wash: #12302a; --del: #f0897f; --del-wash: #38201e; --chg: #e0b45c; --chg-wash: #33291a; --warn-bg: #2d2412; --warn-ink: #f0cf86;
   }
 }
 :root[data-theme="dark"] {
@@ -63,7 +65,7 @@
   --accent: #62c4d8; --accent-wash: #16323a; --on-ink: #0a1418;
   --poverty: #d95926; --income: #3987e5; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
   --context: #6f8289; --context-2: #3d4f56; --grid: #1c2b31; --axis: #35484f;
-  --add: #4fc98a; --add-wash: #12302a; --del: #f0897f; --del-wash: #38201e; --chg: #e0b45c; --chg-wash: #33291a;
+  --add: #4fc98a; --add-wash: #12302a; --del: #f0897f; --del-wash: #38201e; --chg: #e0b45c; --chg-wash: #33291a; --warn-bg: #2d2412; --warn-ink: #f0cf86;
 }
 
 * { box-sizing: border-box; }
@@ -398,3 +400,7 @@ textarea { line-height: 1.45; resize: vertical; }
 .calc-map .plate-map path.here { stroke: #fff; stroke-width: 1.5; }
 .calc-map-side { display: grid; gap: 16px; align-content: start; min-width: 0; }
 .calc-map-side th { white-space: normal; }
+
+/* ---- notice under the landing page introduction ---- */
+.callout { margin: 0; justify-self: start; max-width: 62ch; background: var(--warn-bg); color: var(--warn-ink); border-radius: 6px; padding: 12px 14px; font-size: var(--t-sm); }
+.callout strong { color: inherit; }
