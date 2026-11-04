@@ -1,6 +1,6 @@
 // Methodology page: which inputs the models rely on, and how they compare with simpler approaches on held-out data.
-import { getJSON, figure } from "./lib.js?b=50f9fd3b4a";
-import { barsH } from "./charts.js?b=50f9fd3b4a";
+import { getJSON, figure } from "./lib.js?b=65ddb44d93";
+import { barsH } from "./charts.js?b=65ddb44d93";
 
 const two = (v) => v.toFixed(2);
 const three = (v) => (v == null ? "n/a" : v.toFixed(3));

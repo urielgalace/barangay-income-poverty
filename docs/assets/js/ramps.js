@@ -1,7 +1,7 @@
 // Map color scales. Every map sits on the dark sea plate, so low values are dim and high values bright.
-// One hue per measure: blue for income, orange for poverty, gray for uncertainty. Blue and red only for change.
+// One hue per measure: blue for income, orange for poverty. Blue and red only for change.
 // Income is in pesos per month.
-import { fmt } from "./lib.js?b=50f9fd3b4a";
+import { fmt } from "./lib.js?b=65ddb44d93";
 
 export const SEA = "#0a1c24";
 export const NODATA = "#22323a";
@@ -25,13 +25,6 @@ export const RAMPS = {
     ends: ["Under 2%", "30% or more"],
     tick: (b) => `${b}%`,
     format: (v) => (v == null ? "n/a" : `${v.toFixed(1)}%`),
-  },
-  width: {
-    key: "w", label: "Width of the 90% interval", short: "Uncertainty", unit: "percentage points",
-    breaks: [15, 25, 35, 45, 55],
-    colors: ["#3c4447", "#596265", "#788184", "#98a2a5", "#bac3c7", "#dce7ea"],
-    labels: ["Under 15", "15 to 25", "25 to 35", "35 to 45", "45 to 55", "55 or more"],
-    format: (v) => (v == null ? "n/a" : `${v.toFixed(0)} points`),
   },
 };
 

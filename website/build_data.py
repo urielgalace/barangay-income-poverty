@@ -134,7 +134,6 @@ def load_current():
                     dtype={c: str for c in ("bgy_pcode", "psgc_2026", "city_psgc", "prov_psgc", "reg_psgc")})
     idx = pd.read_csv(CACHE / "geometry_index.csv", dtype={"bgy_pcode": str, "chunk": str})
     d = d.merge(idx, on="bgy_pcode", how="left")
-    d["width"] = d.poverty_pi_hi - d.poverty_pi_lo
     d["reg_short"] = d.reg_name.map(SHORT)
     return d, d[d.poverty_rate_2025.notna()].copy()
 
@@ -144,7 +143,6 @@ def write_lgus(d, e):
     pts = pd.read_csv(CACHE / "lgu_points.csv", dtype={"city_psgc": str, "reg_psgc": str})
     t = t.merge(pts, on="city_psgc", how="left")
     extra = e.groupby("city_psgc").agg(src=("municipal_prior_source", "first"), reg=("reg_short", "first"), area=("area_km2", "sum"), income_class=("city_income_class", "first")).reset_index()
-    extra["w"] = extra.city_psgc.map({k: wavg(s.width, s.population_2024) for k, s in e.groupby("city_psgc")})
     t = t.merge(extra, on="city_psgc", how="left")
     t["reg"] = t.reg.fillna(t.reg_name.map(SHORT))
     t["city_class"] = t.city_class.fillna("")
@@ -156,8 +154,8 @@ def write_lgus(d, e):
     t = t.rename(columns={"city_psgc": "id", "city_name": "name", "city_class": "cls", "prov_name": "prov", "population_2024": "pop", "households_2024": "hh",
                           "poverty_rate_2025": "p", "poverty_rate_strict_official": "ps", "poor_persons_2025": "poor", "income_k_2025": "i", "barangay_units": "nb",
                           "barangay_poverty_min": "pmin", "barangay_poverty_max": "pmax", "barangay_income_min": "imin", "barangay_income_max": "imax", "area_key": "parent"})
-    cols = ["id", "name", "cls", "prov", "reg", "parent", "pop", "hh", "p", "ps", "poor", "i", "nb", "pmin", "pmax", "imin", "imax", "density", "lon", "lat", "src", "w"]
-    dump("lgus.json", table(t, cols, {"p": 2, "ps": 2, "i": 0, "pmin": 2, "pmax": 2, "imin": 0, "imax": 0, "density": 0, "w": 1}))
+    cols = ["id", "name", "cls", "prov", "reg", "parent", "pop", "hh", "p", "ps", "poor", "i", "nb", "pmin", "pmax", "imin", "imax", "density", "lon", "lat", "src"]
+    dump("lgus.json", table(t, cols, {"p": 2, "ps": 2, "i": 0, "pmin": 2, "pmax": 2, "imin": 0, "imax": 0, "density": 0}))
     return t
 
 

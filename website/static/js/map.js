@@ -133,7 +133,6 @@ async function ensureChunk(chunk) {
     const feats = toFeatures(geo, (id, i) => {
       const p = { id, chunk, n: vals.n[i], c: vals.c[i], psgc: vals.psgc[i], t: vals.t[i], m: vals.m[i], u: vals.u[i], a: vals.a[i] };
       for (const k of ["p", "pl", "ph", "ps", "i", "il", "ih", "h", "f"]) if (vals[k][i] != null) p[k] = vals[k][i];
-      if (p.pl != null) p.w = p.ph - p.pl;
       return p;
     });
     const sid = `b-${chunk}`;
@@ -289,16 +288,15 @@ function updateSeg() {
   segMetric.set(state.metric);
   for (const b of segLevel.buttons) {
     const v = b.dataset.v;
-    b.disabled = (versioned || state.metric === "width") && (v === "region" || v === "province");
+    b.disabled = versioned && (v === "region" || v === "province");
   }
   for (const b of segMetric.buttons) {
     const v = b.dataset.v;
-    b.disabled = versioned && (v === "width" || v === "poor");
+    b.disabled = versioned && v === "poor";
   }
   el("local-wrap").hidden = state.metric === "poor" || !!state.from;
 }
 function refreshAll() {
-  if (state.metric === "width" && (state.level === "region" || state.level === "province")) state.level = "lgu";
   if (state.local) updateLocal(); else state.localRamp = null;
   refreshFills();
   applyLevel();
@@ -541,7 +539,7 @@ async function boot() {
     const lf = toFeatures(geoL, (id) => {
       const l = lguById.get(id);
       const p = { id };
-      if (l) { if (l.p != null) p.p = l.p; if (l.i != null) p.i = l.i; if (l.w != null) p.w = l.w; p.poor = l.poor; }
+      if (l) { if (l.p != null) p.p = l.p; if (l.i != null) p.i = l.i; p.poor = l.poor; }
       return p;
     });
     const pf = toFeatures(geoP, (id) => {
@@ -603,7 +601,7 @@ async function boot() {
   });
 
   // ---- controls
-  segMetric = segmented(el("metric"), [{ value: "income", label: "Income" }, { value: "poverty", label: "Poverty" }, { value: "poor", label: "Poor people" }, { value: "width", label: "Uncertainty" }], state.metric, (v) => { state.metric = v; refreshAll(); }, "Measure");
+  segMetric = segmented(el("metric"), [{ value: "income", label: "Income" }, { value: "poverty", label: "Poverty" }, { value: "poor", label: "Poor people" }], state.metric, (v) => { state.metric = v; refreshAll(); }, "Measure");
   segLevel = segmented(el("level"), [{ value: "region", label: "Region" }, { value: "province", label: "Province" }, { value: "lgu", label: "City/mun." }, { value: "barangay", label: "Barangay" }], state.level, (v) => { state.level = v; refreshAll(); }, "Level");
   const localBox = el("local");
   localBox.checked = state.local;
