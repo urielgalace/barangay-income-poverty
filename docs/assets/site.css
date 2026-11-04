@@ -379,7 +379,9 @@ details[open] > summary { margin-bottom: 10px; }
 #c-size { width: 90px; }
 .calc-form .combo { max-width: 560px; }
 .calc-msg { color: var(--del); }
+.calc-msg.hint { color: var(--ink-2); }
 .calc-msg:empty { display: none; }
+.calc-note { margin: 0; max-width: 62ch; color: var(--ink-3); }
 .stat dd.word { font-size: 1.3rem; line-height: 1.2; }
 .ladder th { white-space: normal; }
 .ladder tr[aria-current="true"] td { background: var(--accent-wash); font-weight: 700; }

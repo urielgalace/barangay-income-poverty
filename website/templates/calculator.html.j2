@@ -5,7 +5,7 @@
     <h1>Income Percentile Calculator</h1>
     <p class="lede">Enter your income to see how it compares with others nationally and in your area, determine what income class you belong to, and assess how your income compares with the living wage.</p>
   </div>
-  <form class="calc-form" id="c-form" autocomplete="off" novalidate>
+  <form class="calc-form" id="c-form" autocomplete="off" novalidate onsubmit="return false"{% if calc_log %} data-log="{{ calc_log }}"{% endif %}>
     <div class="filters">
       <div class="field"><label for="c-income">Income (₱)</label><input type="text" inputmode="decimal" id="c-income" placeholder="For example, 20,000"></div>
       <div class="field"><span>Period</span><div id="c-period"></div></div>
@@ -13,7 +13,9 @@
       <div class="field" id="c-size-field" hidden><label for="c-size">Household size</label><input type="number" id="c-size" min="1" max="30" step="1" value="5"></div>
     </div>
     <div class="field combo"><label for="c-place">Location (optional)</label><input type="search" id="c-place" placeholder="Barangay, city, municipality, province or region"></div>
+    <div><button type="submit" class="btn" id="c-go">Calculate</button></div>
     <p class="small calc-msg" id="c-msg" role="status"></p>
+    {% if calc_log %}<p class="small calc-note">Each time you click Calculate, the income, household size, and location you enter are recorded, without any name, contact details, or IP address.</p>{% endif %}
   </form>
 
   <div id="c-results" hidden>

@@ -8,6 +8,9 @@ from __future__ import annotations
 REPO = "urielgalace/barangay-income-poverty"
 SITE = "https://urielgalace.github.io/barangay-income-poverty/"
 CURRENT = "v1.0"
+# The calculator's log: the web app address of the Google Apps Script that adds each calculation's entries to a private
+# Google Sheet. Empty turns the log off, along with the calculator page's note that entries are recorded.
+CALC_LOG = ""
 
 VERSIONS = [
     dict(

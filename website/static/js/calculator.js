@@ -1,5 +1,6 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
-// square-root scale. It all runs in the browser, and nothing typed here goes into the URL.
+// square-root scale. It all runs in the browser when Calculate is clicked, and nothing typed here goes into the URL. When the
+// form carries a log address (CALC_LOG in website/content.py), each calculation's entries are also sent there.
 import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js";
 import { barsH } from "./charts.js";
 import { RAMPS, colorOf } from "./ramps.js";
@@ -60,9 +61,14 @@ async function boot() {
   let period = "month";
   let basis = "individual";
   let picked = null;     // what the search box chose
+  let pickedKey = null;  // which place that was, since names repeat
   let place = null;      // that choice, with its income model
+  let pending = null;    // a chosen place still loading, which Calculate waits for
+  let shown = null;      // the entries behind the results on screen, to tell when they are out of date
   let pctFig;
   let wageFig;
+  const LOG = $("c-form").dataset.log;
+  let sent = null;
 
   async function resolve(it) {
     if (it.kind === "reg") {
@@ -249,7 +255,7 @@ async function boot() {
         tip.show(e.clientX, e.clientY, u.label, [{ value: pctLabel(u.v), label: "your percentile" }, ...(u.avg != null ? [{ value: fmt.peso(u.avg), label: avgLabel() }] : [])]);
       });
       u.p.addEventListener("pointerleave", () => tip.hide());
-      if (u.pick) u.p.addEventListener("click", () => choose(u.pick));
+      if (u.pick) u.p.addEventListener("click", () => choose(u.pick, true));
       else u.p.style.cursor = "default";
       svg.append(u.p);
     });
@@ -333,24 +339,50 @@ async function boot() {
     return h("div", { class: "stat" }, h("dt", { text: label }), h("dd", { text: value, class: word ? "word" : null }), sub ? h("div", { class: "d", text: sub }) : null);
   }
 
+  const say = (text, hint = false) => {
+    $("c-msg").textContent = text;
+    $("c-msg").classList.toggle("hint", hint);
+  };
+  const snapshot = () => JSON.stringify([$("c-income").value.replace(/[₱,\s]/g, ""), period, basis, basis === "household" ? $("c-size").value : "", pickedKey, box.value.trim()]);
+  // once results are showing, edits wait for Calculate, and the message says so
+  function stale() {
+    if ($("c-results").hidden || shown == null) return;
+    if (snapshot() !== shown) say("Click Calculate to update the results.", true);
+    else if ($("c-msg").classList.contains("hint")) say("");
+  }
+
+  async function calculate() {
+    if (pending) await pending.catch(() => {});
+    const got = render();
+    shown = got ? snapshot() : null;
+    if (got) record(got);
+  }
+
+  // one row in the log per calculation: what was entered, and the place chosen from the list (never typed text)
+  function record(got) {
+    if (!LOG) return;
+    const p = place;
+    const body = JSON.stringify({
+      income: got.amount, period: period === "year" ? "annual" : "monthly", basis, size: got.size,
+      place: !p ? "" : p.region ? picked : p.name, level: !p ? "" : p.bgyId ? "barangay" : p.lgu ? "lgu" : p.region ? "region" : "province",
+      id: !p ? "" : p.bgyId || p.lgu?.id || p.region || p.parent,
+    });
+    if (body === sent) return;     // the same entries, calculated again
+    sent = body;
+    fetch(LOG, { method: "POST", mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body }).catch(() => {});
+  }
+
   function render() {
-    const msg = $("c-msg");
     const raw = $("c-income").value.replace(/[₱,\s]/g, "");
     const amount = Number(raw);
     const size = Number($("c-size").value);
     const house = basis === "household";
-    msg.textContent = "";
-    let ok = raw !== "";
-    if (raw && !(amount > 0 && Number.isFinite(amount))) {
-      msg.textContent = "Enter an income greater than zero, using numbers only.";
-      ok = false;
-    }
-    if (house && !(Number.isInteger(size) && size >= 1 && size <= 30)) {
-      msg.textContent = "Enter a household size from 1 to 30.";
-      ok = false;
-    }
-    $("c-results").hidden = !ok;
-    if (!ok) return;
+    const problem = !(raw !== "" && amount > 0 && Number.isFinite(amount)) ? "Enter an income greater than zero, using numbers only."
+      : house && !(Number.isInteger(size) && size >= 1 && size <= 30) ? "Enter a household size from 1 to 30."
+        : box.value.trim() && picked == null ? "Choose a location from the list of suggestions, or leave the field empty." : "";
+    say(problem);
+    $("c-results").hidden = Boolean(problem);
+    if (problem) return null;
 
     const monthly = period === "year" ? amount / 12 : amount;
     const n = house ? size : 1;
@@ -444,17 +476,21 @@ async function boot() {
     };
     if (!wageFig) wageFig = figure($("r-wage-fig"), wageUpdate);
     else wageFig.update(wageUpdate);
+    return { amount, size: house ? size : null };
   }
 
-  segmented($("c-period"), [{ value: "month", label: "Monthly" }, { value: "year", label: "Annual" }], period, (v) => { period = v; render(); }, "Income period");
+  segmented($("c-period"), [{ value: "month", label: "Monthly" }, { value: "year", label: "Annual" }], period, (v) => { period = v; stale(); }, "Income period");
   segmented($("c-basis"), [{ value: "individual", label: "Individual" }, { value: "household", label: "Household" }], basis, (v) => {
     basis = v;
     $("c-size-field").hidden = v !== "household";
-    render();
+    stale();
   }, "Whose income");
-  $("c-form").addEventListener("submit", (e) => e.preventDefault());
-  $("c-income").addEventListener("input", render);
-  $("c-size").addEventListener("input", render);
+  $("c-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    calculate().catch(console.error);
+  });
+  $("c-income").addEventListener("input", stale);
+  $("c-size").addEventListener("input", stale);
 
   const box = $("c-place");
   let token = 0;
@@ -468,22 +504,26 @@ async function boot() {
     sub: (p) => (p.kind === "reg" ? "Region" : p.kind === "prov" ? `${p.p.level === "district" ? "District" : "Province"} · ${p.p.reg}` : placeSub(p)),
     onPick: choose,
   });
-  async function choose(it) {
+  // a place picked from the list waits for Calculate; one clicked on the map is calculated at once
+  async function choose(it, go = false) {
     box.value = it.name;
     picked = it.name;
+    pickedKey = `${it.kind}:${it.id ?? it.p?.id ?? it.r?.short}`;
+    if (!go) stale();
     const mine = ++token;
-    const r = await resolve(it);
-    if (mine !== token) return;
-    place = r;
-    render();
+    const job = resolve(it).then((r) => { if (mine === token) place = r; });
+    pending = job;
+    await job.finally(() => { if (pending === job) pending = null; });
+    if (go && mine === token) await calculate();
   }
   box.addEventListener("input", () => {
     if (picked != null && box.value !== picked) {
       picked = null;
+      pickedKey = null;
       place = null;
       token += 1;
-      render();
     }
+    stale();
   });
 }
 

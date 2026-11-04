@@ -1,7 +1,7 @@
 // Version history, laid out like a document's history: a dated list on the side, the differences in the main pane.
-import { getJSON, fmt, h, figure, combobox } from "./lib.js?b=e70a724fff";
-import { columns } from "./charts.js?b=e70a724fff";
-import { searchPlaces, placeSub } from "./places.js?b=e70a724fff";
+import { getJSON, fmt, h, figure, combobox } from "./lib.js?b=9bce77c066";
+import { columns } from "./charts.js?b=9bce77c066";
+import { searchPlaces, placeSub } from "./places.js?b=9bce77c066";
 
 const SIGN = { Added: ["add", "+"], Fixed: ["chg", "~"], Changed: ["chg", "~"], Removed: ["del", "−"] };
 let V;
