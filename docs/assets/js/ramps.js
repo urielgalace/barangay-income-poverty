@@ -1,7 +1,7 @@
 // Map color scales. Every map sits on the dark sea plate, so low values are dim and high values bright.
 // One hue per measure: blue for income, orange for poverty. Blue and red only for change.
 // Income is in pesos per month.
-import { fmt } from "./lib.js?b=9bce77c066";
+import { fmt } from "./lib.js?b=4fed50cfa3";
 
 export const SEA = "#0a1c24";
 export const NODATA = "#22323a";

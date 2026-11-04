@@ -179,9 +179,10 @@ def write_areas(d, e):
     r["official"] = r.name.map(pr[pr.level == "region"].set_index("area").official_2025)
     r["p"] = r.name.map(pr[pr.level == "region"].set_index("area").dataset)
     r["i_official"] = monthly(r.name.map(ir[ir.level == "region"].set_index("area").official_2025))
+    r["ia"] = r.name.map(ir[ir.level == "region"].set_index("area").official_2025) * 1000     # per year, as PSA publishes it, for the map's annual view
     r["i"] = monthly(r.name.map(ir[ir.level == "region"].set_index("area").dataset))
     r = r.merge(rp, on="reg_psgc", how="left").rename(columns={"reg_psgc": "id"})
-    reg = table(r, ["id", "name", "short", "pop", "hh", "nb", "poor", "official", "p", "i_official", "i", "lon", "lat"], {"p": 2, "i": 0, "i_official": 0})
+    reg = table(r, ["id", "name", "short", "pop", "hh", "nb", "poor", "official", "p", "i_official", "ia", "i", "lon", "lat"], {"p": 2, "i": 0, "i_official": 0, "ia": 0})
     dump("areas.json", {"province": prov, "region": reg})
     return a, r
 
@@ -525,7 +526,7 @@ def write_meta(d, e, items, reg_rows):
         version=K.CURRENT, version_date=K.VERSIONS[0]["date"], repo=K.REPO, site=K.SITE,
         poverty=pov[2025][1], poverty_lo=pov[2025][2], poverty_hi=pov[2025][3], poverty_2023=pov[2023][1], poverty_families=clean(num(fam[6]), 1),
         poor_official_m=round(poor[2025][1] / 1000, 2), poor_dataset_m=round(e.poor_persons_2025.sum() / 1e6, 2), poverty_dataset=round(float(r0.dataset), 2),
-        income=inc[2025][1], income_2023=inc[2023][1], income_dataset=round(monthly(float(i0.dataset))), gini=(ph.get("gini") or [[0, None]])[-1][1],
+        income=inc[2025][1], income_year=int(round(float(i0.official_2025) * 1000)), income_2023=inc[2023][1], income_dataset=round(monthly(float(i0.dataset))), gini=(ph.get("gini") or [[0, None]])[-1][1],
         population=int(e.population_2024.sum()), population_official=112729484, households=int(e.households_2024.sum()), barangays=42010, units=int((d.unit_type != "non_barangay_area").sum()),
         lgus=1642, regions=18, provinces=82, polygons=len(d), blank=int(d[(d.unit_type != "non_barangay_area") & d.poverty_rate_2025.isna()].shape[0]), nonbarangay=int((d.unit_type == "non_barangay_area").sum()),
         line_per_person=lines[2025], line_family5_month=round(lines[2025] * 5 / 12), median_pi=round(float((e.poverty_pi_hi - e.poverty_pi_lo).median()), 1),

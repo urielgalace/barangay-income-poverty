@@ -8,11 +8,25 @@ const BGY_MIN_ZOOM = 8;
 const MAX_CHUNKS = 28;
 const REPORT_URL = (place) => `report.html?place=${encodeURIComponent(place)}`;
 
-const state = { metric: "income", level: "barangay", local: false, localRamp: null, ver: null, from: null, sel: null };
+const state = { metric: "income", period: "month", level: "barangay", local: false, localRamp: null, ver: null, from: null, sel: null };
 const store = {};              // source id -> { fc, byId }
 const chunks = new Map();      // chunk -> { state: loading|ready, used, bbox }
 let map, meta, lgus, lguById, provs, provById, regs, regById, chunkRows, versions;
 const el = (id) => document.getElementById(id);
+
+// income is stored per month, and the map can also show it per year: the figures change, the colours do not
+const perYear = () => state.period === "year";
+const inPeriod = (v) => (v == null ? v : perYear() ? v * 12 : v);
+const incomeWord = () => (perYear() ? "annual" : "monthly");
+function incomeRamp() {
+  const r = RAMPS.income;
+  if (!perYear()) return r;
+  const b = r.breaks;
+  const f = (v) => `₱${fmt.int(v * 12)}`;
+  return { ...r, label: "Average annual household income", unit: "₱ per year", format: (v) => (v == null ? "n/a" : fmt.peso(v * 12)),
+    labels: [`Under ${f(b[0])}`, ...b.slice(1).map((x, i) => `${f(b[i])} to ${f(x)}`), `${f(b[b.length - 1])} or more`] };
+}
+const rampOf = (m) => (m === "income" ? incomeRamp() : RAMPS[m]);
 
 // ---- geometry decoding: integer rings on a 0.0001 degree grid, delta coded
 function decodeRing(a) {
@@ -50,7 +64,7 @@ const pkey = (base, ver) => (ver ? `${base}@${ver}` : base);
 function currentRamp() {
   if (state.from) return DIFF[state.metric];
   if (state.local && state.localRamp) return state.localRamp;
-  return RAMPS[state.metric];
+  return rampOf(state.metric);
 }
 function valueExpr() {
   const base = RAMPS[state.metric].key;
@@ -246,16 +260,16 @@ function updateLocal() {
   const vals = map.queryRenderedFeatures({ layers: activeFills().filter((l) => map.getLayer(l)) }).map((f) => f.properties[key]).filter((v) => v != null);
   if (vals.length < 8) return;
   vals.sort((a, b) => a - b);
-  const base = RAMPS[state.metric];
+  const base = rampOf(state.metric);
   const n = base.colors.length;
   const raw = Array.from({ length: n - 1 }, (_, i) => vals[Math.floor((vals.length * (i + 1)) / n)]);
   const breaks = [];
   const nd = state.metric === "income" ? 0 : (raw[raw.length - 1] < 5 ? 2 : 1);
   for (const b of raw) {
-    const r = state.metric === "income" ? Math.round(b / 100) * 100 : +b.toFixed(nd);
+    const r = state.metric !== "income" ? +b.toFixed(nd) : perYear() ? (Math.round((b * 12) / 1000) * 1000) / 12 : Math.round(b / 100) * 100;
     if (!breaks.length || r > breaks[breaks.length - 1]) breaks.push(r);
   }
-  const f = (v) => (state.metric === "income" ? fmt.peso(v) : `${v.toFixed(nd)}%`);
+  const f = (v) => (state.metric === "income" ? fmt.peso(inPeriod(v)) : `${v.toFixed(nd)}%`);
   const labels = breaks.map((b, i) => (i === 0 ? `Under ${f(b)}` : `${f(breaks[i - 1])} to ${f(b)}`));
   labels.push(`${f(breaks[breaks.length - 1])} or more`);
   const colors = breaks.length + 1 === n ? base.colors : Array.from({ length: breaks.length + 1 }, (_, i) => base.colors[Math.round((i * (n - 1)) / breaks.length)]);
@@ -319,7 +333,7 @@ function kindOfLayer(layerId) {
 const sourceOf = (kind, chunk) => (kind === "bgy" ? `b-${chunk}` : kind);
 function describeValue(p) {
   if (state.metric === "poor") return `${fmt.int(p.poor ?? 0)} people in poverty`;
-  const r = RAMPS[state.metric];
+  const r = rampOf(state.metric);
   const key = r.key;
   if (state.from) {
     const a = p[pkey(key, state.from)];
@@ -417,7 +431,7 @@ async function renderDetail(sel) {
   if (!f) return;
   const p = f.properties;
   const nat = meta.poverty;
-  const natI = meta.income;
+  const natI = perYear() ? meta.income_year : meta.income;
   if (sel.kind === "bgy") {
     const l = lguById.get(p.c);
     const area = provById.get(l?.parent);
@@ -428,12 +442,12 @@ async function renderDetail(sel) {
     } else if (p.p == null) {
       box.append(h("p", { class: "small", text: "The 2024 census counted no residents here, so there are no estimates." }));
     } else {
-      box.append(bigValue("Estimated average monthly household income", fmt.peso(p.i), `90% interval ${fmt.peso(p.il)} to ${fmt.peso(p.ih)}`, intervalBar(p.il, p.i, p.ih, 120000, "var(--income)", natI, `Philippines ${fmt.pesoExact(natI)}`)));
+      box.append(bigValue(`Estimated average ${incomeWord()} household income`, fmt.peso(inPeriod(p.i)), `90% interval ${fmt.peso(inPeriod(p.il))} to ${fmt.peso(inPeriod(p.ih))}`, intervalBar(inPeriod(p.il), inPeriod(p.i), inPeriod(p.ih), inPeriod(120000), "var(--income)", natI, `Philippines ${fmt.pesoExact(natI)}`)));
       box.append(bigValue("Estimated poverty incidence", RAMPS.poverty.format(p.p), `90% interval ${p.pl.toFixed(1)}% to ${p.ph.toFixed(1)}%`, intervalBar(p.pl, p.p, p.ph, 100, "var(--poverty)", nat, `Philippines ${nat}%`)));
       box.append(h("dl", { class: "d-kv" },
         h("div", {}, h("dt", { text: "Population, 2024 census" }), h("dd", { text: fmt.int(p.h) })),
         h("div", {}, h("dt", { text: "Households" }), h("dd", { text: fmt.int(p.f) })),
-        h("div", {}, h("dt", { text: "City or municipality income" }), h("dd", { text: l ? fmt.peso(l.i) : "n/a" })),
+        h("div", {}, h("dt", { text: "City or municipality income" }), h("dd", { text: l ? fmt.peso(inPeriod(l.i)) : "n/a" })),
         h("div", {}, h("dt", { text: "City or municipality poverty" }), h("dd", { text: l ? RAMPS.poverty.format(l.p) : "n/a" }))));
       if (area) box.append(h("p", { class: "d-note", text: `Poverty level set by: ${area.id}, official ${area.official == null ? "n/a" : `${area.official}%`}${area.p != null ? `, ${area.p.toFixed(1)}% as used here` : ""}. ${l?.src ? `Municipal pattern: ${l.src}.` : ""}` }));
       box.append(h("p", { class: "d-note", text: "These are model-based estimates, and figures for individual barangays may be inaccurate. They are best used to identify broader patterns, not to rank or evaluate individual barangays." }));
@@ -447,7 +461,7 @@ async function renderDetail(sel) {
     const area = provById.get(l.parent);
     box.append(h("div", { class: "crumbs", text: [l.reg, l.prov].filter(Boolean).join(" › ") }), h("div", { class: "d-title", text: l.name }));
     box.append(h("div", { class: "tiny", text: `PSGC ${l.id}${l.cls ? ` · ${{ HUC: "Highly urbanized city", ICC: "Independent component city", CC: "Component city" }[l.cls]}` : ""}` }));
-    box.append(bigValue("Estimated average monthly household income", fmt.peso(l.i), `Barangays range from ${fmt.peso(l.imin)} to ${fmt.peso(l.imax)}`, intervalBar(l.imin ?? l.i, l.i, l.imax ?? l.i, 120000, "var(--income)", natI, `Philippines ${fmt.pesoExact(natI)}`)));
+    box.append(bigValue(`Estimated average ${incomeWord()} household income`, fmt.peso(inPeriod(l.i)), `Barangays range from ${fmt.peso(inPeriod(l.imin))} to ${fmt.peso(inPeriod(l.imax))}`, intervalBar(inPeriod(l.imin ?? l.i), inPeriod(l.i), inPeriod(l.imax ?? l.i), inPeriod(120000), "var(--income)", natI, `Philippines ${fmt.pesoExact(natI)}`)));
     box.append(bigValue("Estimated poverty incidence", RAMPS.poverty.format(l.p), `Barangays range from ${l.pmin?.toFixed(1)}% to ${l.pmax?.toFixed(1)}%`, intervalBar(l.pmin ?? l.p, l.p, l.pmax ?? l.p, 100, "var(--poverty)", nat, `Philippines ${nat}%`)));
     box.append(h("dl", { class: "d-kv" },
       h("div", {}, h("dt", { text: "Population, 2024 census" }), h("dd", { text: fmt.int(l.pop) })),
@@ -469,7 +483,8 @@ async function renderDetail(sel) {
   } else {
     const a = sel.kind === "province" ? provById.get(sel.id) : regById.get(sel.id);
     box.append(h("div", { class: "crumbs", text: sel.kind === "province" ? a.reg : "Region" }), h("div", { class: "d-title", text: a.name }));
-    box.append(bigValue("Average monthly household income", sel.kind === "province" ? fmt.peso(a.i) : fmt.pesoExact(a.i_official ?? a.i), sel.kind === "province" ? "Weighted by households across the area" : "Family Income and Expenditure Survey (FIES) 2025, preliminary"));
+    const official = sel.kind === "province" ? null : perYear() ? a.ia : a.i_official;     // per year as PSA publishes it, or per month
+    box.append(bigValue(`Average ${incomeWord()} household income`, official != null ? fmt.pesoExact(official) : sel.kind === "province" ? fmt.peso(inPeriod(a.i)) : fmt.pesoExact(inPeriod(a.i)), sel.kind === "province" ? "Weighted by households across the area" : "Family Income and Expenditure Survey (FIES) 2025, preliminary"));
     box.append(bigValue(sel.kind === "province" && a.official != null ? "Poverty incidence, as used here" : "Poverty incidence, official", `${(a.p ?? a.official).toFixed(1)}%`, a.official != null ? `PSA published ${a.official}%${a.cv ? `, coefficient of variation ${a.cv}%` : ""}` : null));
     box.append(h("dl", { class: "d-kv" },
       h("div", {}, h("dt", { text: "Population, 2024 census" }), h("dd", { text: fmt.int(a.pop) })),
@@ -483,6 +498,7 @@ async function renderDetail(sel) {
 function writeHash() {
   const q = new URLSearchParams();
   if (state.metric !== "income") q.set("m", state.metric);
+  if (perYear()) q.set("per", "year");
   if (state.level !== "barangay") q.set("l", state.level);
   if (state.ver) q.set("ver", state.ver);
   if (state.from) q.set("from", state.from);
@@ -516,6 +532,7 @@ async function boot() {
   const q = readHash();
   if (q.get("m") && (RAMPS[q.get("m")] || q.get("m") === "poor")) state.metric = q.get("m");
   if (q.get("l")) state.level = q.get("l");
+  if (q.get("per") === "year") state.period = "year";
   if (q.get("fit")) state.local = true;
 
   map = new maplibregl.Map({
@@ -602,6 +619,7 @@ async function boot() {
 
   // ---- controls
   segMetric = segmented(el("metric"), [{ value: "income", label: "Income" }, { value: "poverty", label: "Poverty" }, { value: "poor", label: "Poor people" }], state.metric, (v) => { state.metric = v; refreshAll(); }, "Measure");
+  segmented(el("period"), [{ value: "month", label: "Monthly" }, { value: "year", label: "Annual" }], state.period, (v) => { state.period = v; refreshAll(); }, "Income period");
   segLevel = segmented(el("level"), [{ value: "region", label: "Region" }, { value: "province", label: "Province" }, { value: "lgu", label: "City/mun." }, { value: "barangay", label: "Barangay" }], state.level, (v) => { state.level = v; refreshAll(); }, "Level");
   const localBox = el("local");
   localBox.checked = state.local;

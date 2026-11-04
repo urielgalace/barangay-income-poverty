@@ -1,10 +1,10 @@
 // Income percentile calculator: percentile, income class and living wage, with incomes adjusted for household size by the
 // square-root scale. It all runs in the browser when Calculate is clicked, and nothing typed here goes into the URL. When the
 // form carries a log address (CALC_LOG in website/content.py), each calculation's entries are also sent there.
-import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=9bce77c066";
-import { barsH } from "./charts.js?b=9bce77c066";
-import { RAMPS, colorOf } from "./ramps.js?b=9bce77c066";
-import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=9bce77c066";
+import { getJSON, objects, fmt, h, s, tip, figure, segmented, combobox, rankMatches } from "./lib.js?b=4fed50cfa3";
+import { barsH } from "./charts.js?b=4fed50cfa3";
+import { RAMPS, colorOf } from "./ramps.js?b=4fed50cfa3";
+import { loadPlaces, searchPlaces, placeSub } from "./places.js?b=4fed50cfa3";
 
 const $ = (id) => document.getElementById(id);
 const SUFFIX = ["th", "st", "nd", "rd"];
@@ -385,6 +385,9 @@ async function boot() {
     if (problem) return null;
 
     const monthly = period === "year" ? amount / 12 : amount;
+    // the results show pesos for the period entered: per month, or per year for an annual income
+    const yearly = period === "year" ? 12 : 1;
+    const per = period === "year" ? "per year" : "per month";
     const n = house ? size : 1;
     const unit = house ? `a household of ${n}` : "one person";
     const you = house ? "Your household income" : "Your income";
@@ -407,7 +410,7 @@ async function boot() {
     const w = wageFor(place);
     const need = w.flw * Math.sqrt(n / 5);
     const pct = monthly / need * 100;
-    const gap = fmt.pesoExact(Math.abs(monthly - need));
+    const gap = fmt.pesoExact(Math.abs(monthly - need) * yearly);
 
     const cards = [card("Percentile nationwide", pctLabel(natPct))];
     if (local) cards.push(card(`Percentile in ${place.short}`, pctLabel(locPct), lo != null ? `Likely range: ${pctLabel(lo)} to ${pctLabel(hi)}` : place.own ? null : "Rough estimate"));
@@ -421,25 +424,25 @@ async function boot() {
       lo != null ? `Given the margin of error of this barangay's estimate, your percentile there is likely between the ${pctLabel(lo).toLowerCase()} and the ${pctLabel(hi).toLowerCase()}.` : null,
       local && !place.own ? `The Family Income and Expenditure Survey (FIES) has no figures for ${the(place.short)} itself, so this applies the income spread of ${the(place.ref)} to the estimated average income of ${the(place.short)}.` : null,
       place?.noData ? `There is no income estimate for ${place.name}, because it had no recorded residents in the 2024 census.` : null,
-      `To reach the middle of the national distribution, ${house ? `a household of ${n}` : "a person living alone"} would need about ${fmt.peso(middle(nat))} per month.`
-        + (local ? ` In ${the(place.name)}, the figure is about ${fmt.peso(middle(place.d, place.k))}.` : ""));
+      `To reach the middle of the national distribution, ${house ? `a household of ${n}` : "a person living alone"} would need about ${fmt.peso(middle(nat) * yearly)} ${per}.`
+        + (local ? ` In ${the(place.name)}, the figure is about ${fmt.peso(middle(place.d, place.k) * yearly)}.` : ""));
 
-    const pctRows = [{ label: "Philippines", value: natPct, med: middle(nat) }];
-    if (local) pctRows.push({ label: place.short, value: locPct, med: middle(place.d, place.k) });
+    const pctRows = [{ label: "Philippines", value: natPct, med: middle(nat) * yearly }];
+    if (local) pctRows.push({ label: place.short, value: locPct, med: middle(place.d, place.k) * yearly });
     const pctUpdate = {
       title: "Your income percentile", sub: "",
       draw: (b, W) => barsH(b, W, { rows: pctRows, color: "income", format: pctLabel, max: 100, tipRows: (r) => [{ value: pctLabel(r.value), label: "percentile" }] }),
-      table: () => ({ headers: ["Area", "Your percentile", `Income (₱) per month at the 50th percentile, ${house ? `household of ${n}` : "one person"}`], numeric: [0, 1, 1], rows: pctRows.map((r) => [r.label, pctLabel(r.value), fmt.hundreds(r.med)]) }),
+      table: () => ({ headers: ["Area", "Your percentile", `Income (₱) ${per} at the 50th percentile, ${house ? `household of ${n}` : "one person"}`], numeric: [0, 1, 1], rows: pctRows.map((r) => [r.label, pctLabel(r.value), fmt.hundreds(r.med)]) }),
     };
     if (!pctFig) pctFig = figure($("r-pct-fig"), pctUpdate);
     else pctFig.update(pctUpdate);
     paintArea(adjusted, n, house, period).catch(console.error);
 
     const lead = h("p", {}, "Based on the classification of the Philippine Institute for Development Studies, your income places you in the ", h("strong", { text: cls.name.toLowerCase() }), " class.");
-    para($("r-class-text"), lead, `${you} is ${times(mult)} times the poverty line for ${unit}, which is ${fmt.pesoExact(line)} per month in ${P.label} prices.`);
+    para($("r-class-text"), lead, `${you} is ${times(mult)} times the poverty line for ${unit}, which is ${fmt.pesoExact(line * yearly)} ${per} in ${P.label} prices.`);
     const range = (c) => {
-      const a = fmt.int(line * c.lo);
-      const b = c.hi && fmt.int(line * c.hi);
+      const a = fmt.int(line * yearly * c.lo);
+      const b = c.hi && fmt.int(line * yearly * c.hi);
       return !c.lo ? `Below ${b}` : b ? `${a} to ${b}` : `${a} or more`;
     };
     const multiple = (c) => (!c.lo ? `Below ${c.hi}` : c.hi ? `${c.lo} to ${c.hi}` : `${c.lo} or more`);
@@ -447,32 +450,32 @@ async function boot() {
     $("r-class-table").replaceChildren(
       h("thead", {}, h("tr", {},
         h("th", { scope: "col", text: "Income class" }), h("th", { scope: "col", class: "n times", text: "Times the poverty line" }),
-        h("th", { scope: "col", class: "n", text: `Income (₱) per month, ${house ? `household of ${n}` : "one person"}` }), h("th", { scope: "col", class: "n", text: "Share of Filipinos" }))),
+        h("th", { scope: "col", class: "n", text: `Income (₱) ${per}, ${house ? `household of ${n}` : "one person"}` }), h("th", { scope: "col", class: "n", text: "Share of Filipinos" }))),
       h("tbody", {}, C.classes.map((c, i) => h("tr", { "aria-current": i === idx ? "true" : null },
         h("td", {}, c.name, i === idx ? h("span", { class: "you", text: "You" }) : null), h("td", { class: "n times", text: multiple(c) }), h("td", { class: "n", text: range(c) }), h("td", { class: "n", text: share(c.share) })))));
 
-    const flw = fmt.pesoExact(w.flw);
+    const flw = fmt.pesoExact(w.flw * yearly);
     const five = house && n === 5;
-    const opening = `IBON Foundation estimates that a family of five in ${w.area} should receive ${flw} per month to live decently.`;
+    const opening = `IBON Foundation estimates that a family of five in ${w.area} should receive ${flw} ${per} to live decently.`;
     const meaning = `${you} is ${ofWage(pct)}${pct > 100 ? "" : " of"} the living wage for ${five ? "a family of five" : unit}. ${opening}`
-      + (five ? " " : ` Adjusted for household size, that is ${fmt.pesoExact(need)} per month for ${unit}. `)
+      + (five ? " " : ` Adjusted for household size, that is ${fmt.pesoExact(need * yearly)} ${per} for ${unit}. `)
       + (Math.abs(monthly - need) < 1 ? "That is exactly enough to meet that standard."
-        : pct >= 100 ? `${house ? "Your household income" : "Your income"} exceeds that standard by ${gap} per month.` : `${house ? "Your household falls" : "You would fall"} ${gap} per month short of that standard.`);
+        : pct >= 100 ? `${house ? "Your household income" : "Your income"} exceeds that standard by ${gap} ${per}.` : `${house ? "Your household falls" : "You would fall"} ${gap} ${per} short of that standard.`);
     para($("r-wage-text"), meaning,
       house ? null : `If your income also had to support a family of five, it would ${monthly > w.flw ? `be ${ofWage(monthly / w.flw * 100)}` : `cover ${ofWage(monthly / w.flw * 100)} of`} IBON's figure.`,
-      `For comparison, a full-time minimum wage earner in ${w.mwArea} earns about ${fmt.pesoExact(w.mw)} per month, or ${ofWage(w.mw / w.flw * 100)}${w.mw > w.flw ? "" : " of"} the living wage for a family of five.`,
+      `For comparison, a full-time minimum wage earner in ${w.mwArea} earns about ${fmt.pesoExact(w.mw * yearly)} ${per}, or ${ofWage(w.mw / w.flw * 100)}${w.mw > w.flw ? "" : " of"} the living wage for a family of five.`,
       w.note);
 
     const wageRows = [
-      { label: "Your income", value: monthly, color: "income" },
-      { label: "Living wage", value: need, color: "context" },
-      { label: "Minimum wage", value: w.mw, color: "context" },
+      { label: "Your income", value: monthly * yearly, color: "income" },
+      { label: "Living wage", value: need * yearly, color: "context" },
+      { label: "Minimum wage", value: w.mw * yearly, color: "context" },
     ];
     const wageUpdate = {
       title: "Your income and the living wage",
       sub: `The living wage is IBON's figure for a family of five${five ? "" : `, adjusted to ${unit}`}. The minimum wage is for one full-time worker.`,
       draw: (b, W) => barsH(b, W, { rows: wageRows, format: fmt.pesoExact }),
-      table: () => ({ headers: ["", "Income (₱) per month", "Compared with the living wage"], numeric: [0, 1, 1], rows: wageRows.map((r) => [r.label, fmt.int(r.value), ofWage(r.value / need * 100)]) }),
+      table: () => ({ headers: ["", `Income (₱) ${per}`, "Compared with the living wage"], numeric: [0, 1, 1], rows: wageRows.map((r) => [r.label, fmt.int(r.value), ofWage(r.value / (need * yearly) * 100)]) }),
     };
     if (!wageFig) wageFig = figure($("r-wage-fig"), wageUpdate);
     else wageFig.update(wageUpdate);
