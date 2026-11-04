@@ -2,7 +2,7 @@
 
 **Website: https://urielgalace.github.io/barangay-income-poverty/**
 
-A dataset of household income and poverty rates covering all 42,010 barangays in the Philippines. Regional and provincial figures are based on official government data, while machine learning is used to estimate data at the barangay level.
+A dataset of household income and poverty rates covering all 42,010 barangays in the Philippines, estimated using machine learning.
 
 **All barangay estimates are preliminary and are a work-in-progress.**
 
